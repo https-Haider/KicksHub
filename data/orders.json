@@ -1,0 +1,54 @@
+[
+  {
+    "items": [
+      {
+        "productId": 2,
+        "productName": "Nike Air Max 90",
+        "price": 129.99,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 129.99,
+    "shipping": 0,
+    "tax": 10.4,
+    "total": 140.39,
+    "customerName": "Haider Abbas",
+    "email": "doc.haider.hunjra@gmail.com",
+    "phone": "03491441882",
+    "address": "238-C Mohlanwal Housing Scheme",
+    "city": "LAHORE",
+    "state": "Punjab",
+    "zipCode": "53720",
+    "status": "pending",
+    "id": "ORD-1761653098171-ELRZ3UT",
+    "createdAt": "2025-10-28T12:04:58.171Z",
+    "otpHash": null,
+    "otpExpiresAt": null
+  },
+  {
+    "items": [
+      {
+        "productId": 2,
+        "productName": "Nike Air Max 90",
+        "price": 129.99,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 129.99,
+    "shipping": 0,
+    "tax": 10.4,
+    "total": 140.39,
+    "customerName": "Haider Abbas",
+    "email": "doc.haider.hunjra@gmail.com",
+    "phone": "03491441882",
+    "address": "238-C Mohlanwal Housing Scheme",
+    "city": "LAHORE",
+    "state": "Punjab",
+    "zipCode": "53720",
+    "status": "confirmed",
+    "id": "ORD-1761653269255-7A84KCF",
+    "createdAt": "2025-10-28T12:07:49.255Z",
+    "otpHash": null,
+    "otpExpiresAt": null
+  }
+]

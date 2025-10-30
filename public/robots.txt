@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Sitemap: /sitemap.xml
+
+# For staging/preview, disallow crawling by changing the above to Disallow: /
