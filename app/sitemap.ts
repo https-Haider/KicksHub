@@ -22,7 +22,7 @@ export async function GET() {
     // const products = (await getAllProducts()) as Product[];
     const products: Product[] = await getAllProducts();
 
-    const baseUrl = process.env.SITE_URL ?? "http://localhost:3000";
+    const baseUrl = process.env.SITE_URL ?? "https://www.kickshub.site/";
 
     const urls: string[] = [
       `${baseUrl}/`,
