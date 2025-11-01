@@ -1,8 +1,10 @@
 import { MongoClient } from "mongodb";
+import { slugify as localSlugify } from "@/lib/products";
 
 export type Product = {
   id: number;
   name: string;
+  slug?: string;
   price: number;
   image: string;
   category: string;
@@ -13,6 +15,9 @@ export type Product = {
   sku?: string;
   sizes?: string[];
   condition?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
 };
 
 const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://localhost:27017";
@@ -41,6 +46,7 @@ export async function getAllProducts(): Promise<Product[]> {
   return docs.map((d: any) => ({
     id: d.id,
     name: d.name,
+    slug: d.slug,
     price: d.price,
     image: d.image,
     category: d.category,
@@ -51,6 +57,9 @@ export async function getAllProducts(): Promise<Product[]> {
     sku: d.sku,
     sizes: d.sizes,
     condition: d.condition,
+    seoTitle: d.seoTitle,
+    seoDescription: d.seoDescription,
+    seoKeywords: d.seoKeywords,
   }));
 }
 
@@ -61,6 +70,65 @@ export async function getProductById(id: number): Promise<Product | null> {
   return {
     id: doc.id,
     name: doc.name,
+    slug: doc.slug,
+    price: doc.price,
+    image: doc.image,
+    category: doc.category,
+    description: doc.description,
+    rating: doc.rating,
+    reviews: doc.reviews,
+    inStock: doc.inStock,
+    sku: doc.sku,
+    sizes: doc.sizes,
+    condition: doc.condition,
+    seoTitle: doc.seoTitle,
+    seoDescription: doc.seoDescription,
+    seoKeywords: doc.seoKeywords,
+  };
+}
+
+export async function getProductBySlug(slug: string): Promise<Product | null> {
+  const col = await getCollection();
+  // attempt to find by explicit slug field
+  let doc = await col.findOne({ slug });
+  if (!doc) {
+    // try matching numeric id
+    const maybeId = Number(slug);
+    if (!Number.isNaN(maybeId)) {
+      doc = await col.findOne({ id: maybeId });
+    }
+  }
+  // if still not found, try matching by slugified name in DB documents
+  if (!doc) {
+    try {
+      const cursor = col.find({});
+      const docs = await cursor.toArray();
+      const normalized = String(slug)
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+      for (const d of docs) {
+        const name = String(d.name || "");
+        const nameSlug = name
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "");
+        if (nameSlug === normalized) {
+          doc = d;
+          break;
+        }
+      }
+    } catch (e) {
+      // ignore DB iteration errors and fallback to local products below
+    }
+  }
+  if (!doc) return null;
+  return {
+    id: doc.id,
+    name: doc.name,
+    slug: doc.slug,
     price: doc.price,
     image: doc.image,
     category: doc.category,
@@ -81,7 +149,11 @@ export async function addProduct(
   // generate numeric id by taking max id +1
   const last = await col.find({}).sort({ id: -1 }).limit(1).toArray();
   const nextId = (last[0]?.id ?? 0) + 1;
-  const doc = { ...product, id: nextId };
+  const slug = await ensureUniqueSlug(
+    col,
+    product.slug || product.name || nextId
+  );
+  const doc = { ...product, id: nextId, slug };
   await col.insertOne(doc);
   return { ...doc };
 }
@@ -91,9 +163,16 @@ export async function updateProduct(
   updates: Partial<Product>
 ): Promise<Product | null> {
   const col = await getCollection();
+  const set: any = { ...updates };
+  // If name or slug is being updated, re-compute a unique slug unless explicitly set
+  if (typeof updates.slug === "string" && updates.slug.trim()) {
+    set.slug = await ensureUniqueSlug(col, updates.slug.trim(), id);
+  } else if (typeof updates.name === "string" && updates.name.trim()) {
+    set.slug = await ensureUniqueSlug(col, updates.name.trim(), id);
+  }
   const res = await col.findOneAndUpdate(
     { id },
-    { $set: updates },
+    { $set: set },
     { returnDocument: "after" }
   );
   if (!res.value) return null;
@@ -101,6 +180,7 @@ export async function updateProduct(
   return {
     id: d.id,
     name: d.name,
+    slug: d.slug,
     price: d.price,
     image: d.image,
     category: d.category,
@@ -111,6 +191,9 @@ export async function updateProduct(
     sku: d.sku,
     sizes: d.sizes,
     condition: d.condition,
+    seoTitle: d.seoTitle,
+    seoDescription: d.seoDescription,
+    seoKeywords: d.seoKeywords,
   };
 }
 
@@ -118,4 +201,40 @@ export async function deleteProduct(id: number): Promise<boolean> {
   const col = await getCollection();
   const res = await col.deleteOne({ id });
   return res.deletedCount === 1;
+}
+
+// Helpers
+type Col = Awaited<ReturnType<typeof getCollection>>;
+
+async function ensureUniqueSlug(
+  col: Col,
+  value: string | number,
+  currentId?: number
+) {
+  const base = localSlugify(String(value));
+  if (!base) return `product-${Date.now()}`;
+  let candidate = base;
+  // allow keeping existing slug for current document
+  const exists = async (s: string) => {
+    const q: any = { slug: s };
+    if (typeof currentId === "number") {
+      // exclude current document when checking for conflicts
+      const clash = await col.findOne({ slug: s, id: { $ne: currentId } });
+      return !!clash;
+    }
+    const clash = await col.findOne(q);
+    return !!clash;
+  };
+  if (await exists(candidate)) {
+    // try appending id if provided
+    if (typeof currentId === "number") {
+      const withId = `${candidate}-${currentId}`;
+      if (!(await exists(withId))) return withId;
+    }
+    // try appending numeric suffix
+    let i = 2;
+    while (await exists(`${candidate}-${i}`)) i++;
+    candidate = `${candidate}-${i}`;
+  }
+  return candidate;
 }

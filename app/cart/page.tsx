@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { useCart } from "@/lib/cart-context";
 import { Spinner } from "@/components/ui/spinner";
 import { CartButton } from "@/components/cart-button";
+import { getProductSlug } from "@/lib/products";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, total, clearCart, isLoading } =
@@ -100,7 +101,9 @@ export default function CartPage() {
 
                       {/* Product Details */}
                       <div className="flex-grow">
-                        <Link href={`/products/${item.product.id}`}>
+                        <Link
+                          href={`/products/${getProductSlug(item.product)}`}
+                        >
                           <h3 className="font-semibold text-foreground hover:text-primary transition-colors mb-2">
                             {item.product.name}
                           </h3>
