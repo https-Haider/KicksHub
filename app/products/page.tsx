@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { getProductSlug } from "@/lib/products";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CartButton } from "@/components/cart-button";
@@ -191,7 +192,10 @@ export default function ProductsPage() {
             )}
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredAndSortedProducts.map((product) => (
-                <Link key={product.id} href={`/products/${product.id}`}>
+                <Link
+                  key={product.id}
+                  href={`/products/${getProductSlug(product)}`}
+                >
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group cursor-pointer h-full flex flex-col">
                     <div className="relative h-64 overflow-hidden bg-muted">
                       <img

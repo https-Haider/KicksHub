@@ -49,6 +49,9 @@ export default function RootLayout({
         <link rel="icon" href="/placeholder-logo.png" />
         <link rel="canonical" href="/" />
         <meta name="theme-color" content="#000000" />
+        {/* Default Open Graph / Twitter image to avoid missing image errors */}
+        <meta property="og:image" content="/placeholder-logo.png" />
+        <meta name="twitter:image" content="/placeholder-logo.png" />
         {/* Google Search Console verification */}
         {process.env.NEXT_PUBLIC_GSC_VERIFICATION && (
           <meta

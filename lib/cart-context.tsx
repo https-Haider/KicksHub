@@ -82,6 +82,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = () => {
     setItems([]);
+    // immediately clear persisted cart so client navigation sees empty cart
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.removeItem("cart");
+      }
+    } catch (err) {
+      // ignore
+    }
   };
 
   const total = items.reduce(

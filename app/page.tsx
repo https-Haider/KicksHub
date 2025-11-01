@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { CartButton } from "@/components/cart-button";
 import { getAllProducts } from "@/lib/products.server";
+import { getProductSlug } from "@/lib/products";
 
 export default async function Home() {
   // Fetch products server-side and pick the shoes category items for the hero/featured section.
@@ -140,7 +141,10 @@ export default async function Home() {
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {featuredProducts.map((product) => (
-              <Link key={product.id} href={`/products/${product.id}`}>
+              <Link
+                key={product.id}
+                href={`/products/${getProductSlug(product)}`}
+              >
                 <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group cursor-pointer">
                   <div className="relative h-64 overflow-hidden bg-muted">
                     <img
@@ -195,7 +199,10 @@ export default async function Home() {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {moreProducts.map((product) => (
-                <Link key={product.id} href={`/products/${product.id}`}>
+                <Link
+                  key={product.id}
+                  href={`/products/${getProductSlug(product)}`}
+                >
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group cursor-pointer">
                     <div className="relative h-64 overflow-hidden bg-muted">
                       <img

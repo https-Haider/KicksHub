@@ -1,16 +1,21 @@
 export interface Product {
-  id: number
-  name: string
-  price: number
-  image: string
-  category: string
-  description: string
-  rating: number
-  reviews: number
-  inStock: boolean
-  sku: string
-  sizes?: string[]
-  condition: "like-new" | "excellent" | "good" | "fair"
+  id: number;
+  name: string;
+  slug?: string;
+  price: number;
+  image: string;
+  category: string;
+  description: string;
+  rating: number;
+  reviews: number;
+  inStock: boolean;
+  sku: string;
+  sizes?: string[];
+  condition: "like-new" | "excellent" | "good" | "fair";
+  // SEO fields
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
 }
 
 export const allProducts: Product[] = [
@@ -35,7 +40,8 @@ export const allProducts: Product[] = [
     price: 129.99,
     image: "/shoes/air-max-90.jpg",
     category: "Casual",
-    description: "Timeless Nike Air Max 90 with visible Air unit. Great condition with minimal wear.",
+    description:
+      "Timeless Nike Air Max 90 with visible Air unit. Great condition with minimal wear.",
     rating: 4.7,
     reviews: 256,
     inStock: true,
@@ -49,7 +55,8 @@ export const allProducts: Product[] = [
     price: 79.99,
     image: "/shoes/stan-smith.jpg",
     category: "Casual",
-    description: "Classic Adidas Stan Smith in white leather. Perfect everyday sneaker with light wear.",
+    description:
+      "Classic Adidas Stan Smith in white leather. Perfect everyday sneaker with light wear.",
     rating: 4.6,
     reviews: 189,
     inStock: true,
@@ -63,7 +70,8 @@ export const allProducts: Product[] = [
     price: 54.99,
     image: "/shoes/chuck-taylor.jpg",
     category: "Casual",
-    description: "Vintage Converse Chuck Taylor in canvas. Retro style with authentic wear.",
+    description:
+      "Vintage Converse Chuck Taylor in canvas. Retro style with authentic wear.",
     rating: 4.5,
     reviews: 412,
     inStock: true,
@@ -77,7 +85,8 @@ export const allProducts: Product[] = [
     price: 149.99,
     image: "/shoes/dunk-low.jpg",
     category: "Basketball",
-    description: "Nike Dunk Low with clean colorway. Excellent condition, barely worn.",
+    description:
+      "Nike Dunk Low with clean colorway. Excellent condition, barely worn.",
     rating: 4.8,
     reviews: 298,
     inStock: true,
@@ -91,7 +100,8 @@ export const allProducts: Product[] = [
     price: 69.99,
     image: "/shoes/vans-old-skool.jpg",
     category: "Casual",
-    description: "Classic Vans Old Skool with iconic side stripe. Good condition with minimal creasing.",
+    description:
+      "Classic Vans Old Skool with iconic side stripe. Good condition with minimal creasing.",
     rating: 4.6,
     reviews: 167,
     inStock: true,
@@ -105,7 +115,8 @@ export const allProducts: Product[] = [
     price: 99.99,
     image: "/shoes/new-balance-574.jpg",
     category: "Running",
-    description: "Comfortable New Balance 574 in retro colorway. Great for everyday wear.",
+    description:
+      "Comfortable New Balance 574 in retro colorway. Great for everyday wear.",
     rating: 4.7,
     reviews: 234,
     inStock: true,
@@ -119,7 +130,8 @@ export const allProducts: Product[] = [
     price: 74.99,
     image: "/shoes/puma-suede.jpg",
     category: "Casual",
-    description: "Vintage Puma Suede in classic silhouette. Soft suede material with authentic patina.",
+    description:
+      "Vintage Puma Suede in classic silhouette. Soft suede material with authentic patina.",
     rating: 4.5,
     reviews: 145,
     inStock: true,
@@ -127,16 +139,45 @@ export const allProducts: Product[] = [
     sizes: ["5", "6", "7", "8", "9", "10", "11"],
     condition: "good",
   },
-]
+];
 
 export function getProductById(id: number): Product | undefined {
-  return allProducts.find((product) => product.id === id)
+  return allProducts.find((product) => product.id === id);
+}
+
+export function slugify(input: string | number) {
+  return String(input)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+export function getProductSlug(
+  product: Product | { id: number; name?: string; slug?: string }
+) {
+  // prefer an explicit slug field if present, otherwise derive from name or id
+  if ((product as any).slug) return String((product as any).slug);
+  if (product.name) return slugify(product.name);
+  return String(product.id);
+}
+
+export function getProductBySlug(slug: string): Product | undefined {
+  const normalized = slugify(slug);
+  return allProducts.find((product) => {
+    const s = getProductSlug(product);
+    if (s === slug) return true;
+    if (slugify(s) === normalized) return true;
+    // fallback to numeric id match
+    if (String(product.id) === slug) return true;
+    return false;
+  });
 }
 
 export function getProductsByCategory(category: string): Product[] {
-  return allProducts.filter((product) => product.category === category)
+  return allProducts.filter((product) => product.category === category);
 }
 
 export function getAllCategories(): string[] {
-  return Array.from(new Set(allProducts.map((product) => product.category)))
+  return Array.from(new Set(allProducts.map((product) => product.category)));
 }

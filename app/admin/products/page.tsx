@@ -26,6 +26,8 @@ export default function AdminProductsPage() {
     sku: "",
     sizes: [],
     condition: "good",
+    seoTitle: "",
+    seoDescription: "",
   });
 
   useEffect(() => {
@@ -70,6 +72,8 @@ export default function AdminProductsPage() {
       sku: "",
       sizes: [],
       condition: "good",
+      seoTitle: "",
+      seoDescription: "",
     });
     setShowModal(true);
   };
@@ -88,6 +92,8 @@ export default function AdminProductsPage() {
       sku: product.sku,
       sizes: product.sizes || [],
       condition: product.condition,
+      seoTitle: (product as any).seoTitle || "",
+      seoDescription: (product as any).seoDescription || "",
     });
     setShowModal(true);
   };
@@ -426,6 +432,42 @@ export default function AdminProductsPage() {
                     placeholder="Product description..."
                   />
                 </div>
+
+                {/* SEO fields */}
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Meta Title
+                  </label>
+                  <input
+                    type="text"
+                    value={(formData as any).seoTitle}
+                    onChange={(e) =>
+                      setFormData({ ...formData, seoTitle: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                    placeholder="SEO meta title (optional)"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Meta Description
+                  </label>
+                  <textarea
+                    value={(formData as any).seoDescription}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        seoDescription: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                    rows={2}
+                    placeholder="SEO meta description (optional)"
+                  />
+                </div>
+
+                {/* Removed Meta Keywords - keywords are mostly ignored by search engines. Keeping only title + description for SEO. */}
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">

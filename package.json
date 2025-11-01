@@ -8,6 +8,8 @@
     "start": "next start",
     "seed:products": "node scripts/seed-products.js",
     "upload:images": "node scripts/upload-images.js",
+    "backfill:seo": "node scripts/backfill-product-seo.js",
+    "backfill:slugs": "node scripts/backfill-product-slugs.js",
     "lint": "eslint ."
   },
   "dependencies": {
