@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CartButton } from "@/components/cart-button";
 import { getAllProducts } from "@/lib/products.server";
 import { getProductSlug } from "@/lib/products";
+import { LandingReviewsWrapper } from "@/components/landing-reviews-wrapper";
 
 export default async function Home() {
   // Fetch products server-side and pick the shoes category items for the hero/featured section.
@@ -61,13 +62,13 @@ export default async function Home() {
                 Shop
               </Link>
               <Link
-                href="#"
+                href="/about"
                 className="text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 About
               </Link>
               <Link
-                href="#"
+                href="/contact"
                 className="text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 Contact
@@ -239,7 +240,7 @@ export default async function Home() {
       )}
 
       {/* Trust Section */}
-      <section className="py-16 bg-muted/30" aria-label="Why choose us">
+      <section className="py-16 bg-background" aria-label="Why choose us">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-8 md:grid-cols-3">
             <div className="text-center">
@@ -260,6 +261,9 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Customer Reviews Section */}
+      <LandingReviewsWrapper />
+
       {/* Footer */}
       <footer
         className="border-t border-border bg-background py-12"
@@ -272,7 +276,7 @@ export default async function Home() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <Link
-                    href="#"
+                    href="/about"
                     className="hover:text-foreground transition-colors"
                   >
                     About Us
@@ -309,7 +313,7 @@ export default async function Home() {
                 </li>
                 <li>
                   <Link
-                    href="#"
+                    href="/contact"
                     className="hover:text-foreground transition-colors"
                   >
                     Contact Us
@@ -317,7 +321,7 @@ export default async function Home() {
                 </li>
                 <li>
                   <Link
-                    href="#"
+                    href="/contact"
                     className="hover:text-foreground transition-colors"
                   >
                     FAQ
