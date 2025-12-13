@@ -74,12 +74,6 @@ export default function AdminLoginPage() {
         </form>
 
         <div className="mt-6 pt-6 border-t border-border text-center">
-          <p className="text-sm text-muted-foreground mb-4">
-            Demo password:{" "}
-            <span className="font-mono font-semibold text-foreground">
-              haider1011
-            </span>
-          </p>
           <Link href="/">
             <Button variant="outline" className="w-full bg-transparent">
               Back to Store
