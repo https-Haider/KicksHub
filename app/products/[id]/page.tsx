@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getProductById, getProductBySlug } from "@/lib/products.server";
 import ProductDetailClient from "@/components/product-detail-client";
+import { ProductSchema, BreadcrumbSchema } from "@/components/seo/json-ld";
 
 type Props = { params: { id: string } };
 
@@ -63,5 +64,54 @@ export default async function ProductDetailPage({ params }: Props) {
     !Number.isNaN(maybeNum) && String(maybeNum) === String(id)
       ? await getProductById(maybeNum)
       : await getProductBySlug(id as string);
-  return <ProductDetailClient product={product} />;
+
+  const baseUrl = process.env.SITE_URL || "https://www.kickshub.site";
+  const productUrl = `${baseUrl}/products/${id}`;
+
+  // Extract brand from product name (first word usually)
+  const brand = product?.name?.split(" ")[0] || "Unknown";
+
+  // Map condition to schema.org format
+  const conditionMap: Record<
+    string,
+    "NewCondition" | "UsedCondition" | "RefurbishedCondition"
+  > = {
+    "like-new": "RefurbishedCondition",
+    excellent: "UsedCondition",
+    good: "UsedCondition",
+    fair: "UsedCondition",
+  };
+
+  return (
+    <>
+      {product && (
+        <>
+          <ProductSchema
+            name={product.name}
+            description={product.description || "Premium thrifted sneakers"}
+            image={product.image || "/placeholder.svg"}
+            price={product.price}
+            currency="PKR"
+            sku={product.sku || String(product.id)}
+            brand={brand}
+            condition={
+              conditionMap[product.condition || "good"] || "UsedCondition"
+            }
+            availability={product.inStock ? "InStock" : "OutOfStock"}
+            url={productUrl}
+            rating={product.rating}
+            reviewCount={product.reviews}
+          />
+          <BreadcrumbSchema
+            items={[
+              { name: "Home", url: baseUrl },
+              { name: "Products", url: `${baseUrl}/products` },
+              { name: product.name, url: productUrl },
+            ]}
+          />
+        </>
+      )}
+      <ProductDetailClient product={product} />
+    </>
+  );
 }

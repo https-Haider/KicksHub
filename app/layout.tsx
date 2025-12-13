@@ -5,35 +5,88 @@ import { Analytics } from "@vercel/analytics/next";
 import { CartProvider } from "@/lib/cart-context";
 import { AdminProvider } from "@/lib/admin-context";
 import { ProductsProvider } from "@/lib/products-context";
+import {
+  OrganizationSchema,
+  WebsiteSchema,
+  LocalBusinessSchema,
+} from "@/components/seo/json-ld";
 import "./globals.css";
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "KicksHub - Vintage & Thrifted Sneakers | Authentic Shoes",
+  metadataBase: new URL(process.env.SITE_URL || "https://www.kickshub.site"),
+  title: {
+    default: "KicksHub - Premium Vintage & Thrifted Sneakers Pakistan",
+    template: "%s | KicksHub",
+  },
   description:
-    "Discover authentic vintage and thrifted sneakers. Shop classic Air Jordans, Nike, Adidas, and more. Curated collection of quality thrifted shoes.",
-  keywords:
-    "vintage sneakers, thrifted shoes, authentic sneakers, retro shoes, Air Jordan, Nike, Adidas",
-  generator: "v0.app",
+    "Pakistan's #1 destination for authentic vintage and thrifted sneakers. Shop premium Air Jordans, Nike, Adidas, New Balance & more. Quality verified, affordable prices, nationwide delivery.",
+  keywords: [
+    "vintage sneakers Pakistan",
+    "thrifted shoes Lahore",
+    "authentic sneakers",
+    "retro shoes Pakistan",
+    "Air Jordan Pakistan",
+    "Nike thrift",
+    "Adidas vintage",
+    "New Balance Pakistan",
+    "pre-owned sneakers",
+    "second hand shoes",
+    "KicksHub",
+    "sneaker store Pakistan",
+  ],
+  authors: [{ name: "KicksHub" }],
+  creator: "KicksHub",
+  publisher: "KicksHub",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   openGraph: {
-    title: "KicksHub - Vintage & Thrifted Sneakers",
+    title: "KicksHub - Premium Vintage & Thrifted Sneakers Pakistan",
     description:
-      "Discover authentic vintage and thrifted sneakers from top brands.",
+      "Pakistan's #1 destination for authentic vintage and thrifted sneakers. Quality verified, affordable prices.",
     type: "website",
-    url: "https://thriftshoes.com",
+    locale: "en_US",
+    url: "https://www.kickshub.site",
+    siteName: "KicksHub",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "KicksHub - Premium Vintage Sneakers",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "KicksHub - Vintage & Thrifted Sneakers",
+    title: "KicksHub - Premium Vintage & Thrifted Sneakers",
     description:
-      "Discover authentic vintage and thrifted sneakers from top brands.",
+      "Pakistan's #1 destination for authentic vintage sneakers. Shop now!",
+    images: ["/og-image.jpg"],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GSC_VERIFICATION,
+  },
+  alternates: {
+    canonical: "https://www.kickshub.site",
+  },
+  category: "ecommerce",
 };
 
 export default function RootLayout({
@@ -49,6 +102,17 @@ export default function RootLayout({
         <link rel="icon" href="/placeholder-logo.png" />
         <link rel="canonical" href="/" />
         <meta name="theme-color" content="#000000" />
+        {/* Preload critical images for LCP optimization */}
+        <link
+          rel="preload"
+          href="/shoes/hero-shoes.jpg"
+          as="image"
+          type="image/jpeg"
+        />
+        <link rel="preload" href="/placeholder-logo.png" as="image" />
+        {/* Preconnect to external domains */}
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         {/* Default Open Graph / Twitter image to avoid missing image errors */}
         <meta property="og:image" content="/placeholder-logo.png" />
         <meta name="twitter:image" content="/placeholder-logo.png" />
@@ -76,6 +140,9 @@ export default function RootLayout({
         )}
       </head>
       <body className={`font-sans antialiased`}>
+        <OrganizationSchema />
+        <WebsiteSchema />
+        <LocalBusinessSchema />
         <AdminProvider>
           <ProductsProvider>
             <CartProvider>{children}</CartProvider>
