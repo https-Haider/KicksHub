@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
+import Image from "next/image";
 import { CartButton } from "@/components/cart-button";
 import { getAllProducts } from "@/lib/products.server";
 import { getProductSlug } from "@/lib/products";
@@ -32,9 +33,12 @@ export default async function Home() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2">
-                <img
+                <Image
                   src="/placeholder-logo.png"
                   alt="KicksHub"
+                  width={56}
+                  height={56}
+                  priority
                   className="h-10 md:h-14 w-auto"
                 />
                 <h1 className="text-2xl font-bold text-primary">KicksHub</h1>
@@ -97,13 +101,14 @@ export default async function Home() {
                 </Button>
               </div>
             </div>
-            <div className="relative h-96 md:h-full rounded-lg overflow-hidden bg-muted">
-              <img
-                src="/shoes/hero-shoes.jpg?height=400&width=400&query=vintage thrifted sneakers collection"
+            <div className="relative h-96 md:h-full min-h-[400px] rounded-lg overflow-hidden bg-muted">
+              <Image
+                src="/shoes/hero-shoes.jpg"
                 alt="Collection of vintage thrifted sneakers including Air Jordans and Nike shoes"
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover"
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
               />
             </div>
           </div>
@@ -127,7 +132,7 @@ export default async function Home() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {featuredProducts.map((product) => {
+            {featuredProducts.map((product, index) => {
               const totalImages =
                 (product.image ? 1 : 0) + (product.images?.length || 0);
               return (
@@ -137,12 +142,13 @@ export default async function Home() {
                 >
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group cursor-pointer">
                     <div className="relative h-64 overflow-hidden bg-muted">
-                      <img
+                      <Image
                         src={product.image || "/placeholder.svg"}
                         alt={product.name || "Product image"}
-                        loading="lazy"
-                        decoding="async"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        priority={index < 2}
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       {totalImages > 1 && (
                         <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md bg-black/60 text-white text-xs font-medium">

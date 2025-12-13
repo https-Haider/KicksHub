@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { getProductSlug } from "@/lib/products";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -79,9 +80,12 @@ export default function ProductsPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
-              <img
+              <Image
                 src="/placeholder-logo.png"
                 alt="KicksHub"
+                width={56}
+                height={56}
+                priority
                 className="h-10 md:h-14 w-auto"
               />
               <div className="text-2xl font-bold text-primary">Kicks Hub</div>
@@ -203,10 +207,12 @@ export default function ProductsPage() {
                 >
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group cursor-pointer h-full flex flex-col">
                     <div className="relative h-64 overflow-hidden bg-muted">
-                      <img
+                      <Image
                         src={product.image || "/placeholder.svg"}
                         alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
                     <div className="p-4 flex flex-col flex-grow">

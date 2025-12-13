@@ -1,5 +1,28 @@
+# KicksHub Robots.txt
 User-agent: *
 Allow: /
-Sitemap: /sitemap.xml
+Disallow: /admin/
+Disallow: /api/
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order-confirmation/
+Disallow: /order-success/
+Disallow: /verify/
 
-# For staging/preview, disallow crawling by changing the above to Disallow: /
+# Crawl-delay for politeness
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://www.kickshub.site/sitemap
+
+# Google specific
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+# Bing specific
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
