@@ -1,5 +1,3 @@
-"use client";
-
 interface OrganizationSchemaProps {
   name?: string;
   url?: string;
