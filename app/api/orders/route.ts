@@ -15,7 +15,22 @@ function createTransporter() {
   });
 }
 
-function escapeHtml(s: any) {
+interface OrderItem {
+  productName: string;
+  quantity: number;
+  price: number;
+}
+
+interface Order {
+  id: string;
+  email: string;
+  customerName?: string;
+  items: OrderItem[];
+  total: number;
+  status?: string;
+}
+
+function escapeHtml(s: string | number | undefined) {
   return String(s)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -28,12 +43,12 @@ function formatMoney(n: number) {
   return `PKR ${Math.round(n)}`;
 }
 
-function renderItemsHtml(items: any[]) {
+function renderItemsHtml(items: OrderItem[]) {
   if (!items || items.length === 0)
     return "<tr><td colspan=3 style='padding:8px;'>No items</td></tr>";
   return items
     .map(
-      (it: any) =>
+      (it: OrderItem) =>
         `<tr><td style='padding:8px;border-bottom:1px solid #eee;'>${escapeHtml(
           it.productName
         )}</td><td style='padding:8px;border-bottom:1px solid #eee;text-align:center;'>x${
@@ -45,7 +60,7 @@ function renderItemsHtml(items: any[]) {
     .join("");
 }
 
-function confirmationHtml(order: any) {
+function confirmationHtml(order: Order) {
   const itemsHtml = renderItemsHtml(order.items || []);
   const VERIFY_BASE_URL =
     process.env.VERIFY_BASE_URL ?? "http://localhost:3000";
@@ -116,14 +131,20 @@ export async function POST(req: Request) {
         html: confirmationHtml(created),
         text: `Your order ${created.id} is confirmed. Total ${created.total}`,
       });
-    } catch (err: any) {
-      console.error("Failed to send confirmation email:", err);
+    } catch (emailErr: unknown) {
+      console.error(
+        "Failed to send confirmation email:",
+        emailErr instanceof Error ? emailErr.message : emailErr
+      );
       // proceed without failing order creation
     }
 
     return NextResponse.json(created);
-  } catch (err: any) {
-    console.error("POST /api/orders error:", err);
+  } catch (err: unknown) {
+    console.error(
+      "POST /api/orders error:",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -135,8 +156,11 @@ export async function GET() {
   try {
     const orders = await getOrders();
     return NextResponse.json(orders);
-  } catch (err: any) {
-    console.error("GET /api/orders error:", err);
+  } catch (err: unknown) {
+    console.error(
+      "GET /api/orders error:",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json({ error: "Internal" }, { status: 500 });
   }
 }

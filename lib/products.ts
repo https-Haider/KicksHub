@@ -4,6 +4,7 @@ export interface Product {
   slug?: string;
   price: number;
   image: string;
+  images?: string[]; // Additional images (3-7 total including main image)
   category: string;
   description: string;
   rating: number;
@@ -157,7 +158,7 @@ export function getProductSlug(
   product: Product | { id: number; name?: string; slug?: string }
 ) {
   // prefer an explicit slug field if present, otherwise derive from name or id
-  if ((product as any).slug) return String((product as any).slug);
+  if ("slug" in product && product.slug) return String(product.slug);
   if (product.name) return slugify(product.name);
   return String(product.id);
 }

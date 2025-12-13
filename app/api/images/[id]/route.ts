@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { getGridFSBucket } from "@/lib/images.server";
+import type { Readable } from "stream";
 
-export async function GET(req: Request, context: any) {
+type Context = { params: { id: string } | Promise<{ id: string }> };
+
+interface GridFSFile {
+  filename?: string;
+  [key: string]: unknown;
+}
+
+export async function GET(req: Request, ctx: Context) {
   try {
-    // `context` may be a plain object or a Promise-wrapped object depending on Next's runtime.
-    // Also `context.params` itself can be a Promise in some Next versions, so await both.
-    const resolved = await Promise.resolve(context);
-    let params: any = resolved?.params ?? resolved;
-    // If params is a Promise (Next may pass Promise-wrapped params), await it as well.
-    params = await Promise.resolve(params);
-    const id = params?.id;
+    const params = await Promise.resolve(ctx.params);
+    const id = params.id;
     if (!id)
       return NextResponse.json({ error: "id required" }, { status: 400 });
 
@@ -20,24 +23,26 @@ export async function GET(req: Request, context: any) {
 
     // Try to determine content-type from filename metadata when possible
     const head = await bucket.find({ _id: oid }).limit(1).toArray();
-    const fileDoc = head[0] as any;
+    const fileDoc = head[0] as GridFSFile | undefined;
     const filename = fileDoc?.filename ?? "image";
     const ext = filename.split(".").pop()?.toLowerCase() ?? "";
     const mime =
       ext === "png" ? "image/png" : ext === "gif" ? "image/gif" : "image/jpeg";
 
     // Convert Node stream to a Web ReadableStream for the Response
-    const nodeStream = downloadStream as any;
+    const nodeStream = downloadStream as unknown as Readable;
     const stream = new ReadableStream({
       start(controller) {
-        nodeStream.on("data", (chunk: any) => controller.enqueue(chunk));
+        nodeStream.on("data", (chunk: Uint8Array) => controller.enqueue(chunk));
         nodeStream.on("end", () => controller.close());
-        nodeStream.on("error", (err: any) => controller.error(err));
+        nodeStream.on("error", (err: Error) => controller.error(err));
       },
       cancel() {
         try {
           nodeStream.destroy();
-        } catch (e) {}
+        } catch {
+          // ignore destroy errors
+        }
       },
     });
 
@@ -45,8 +50,11 @@ export async function GET(req: Request, context: any) {
       status: 200,
       headers: { "Content-Type": mime },
     });
-  } catch (err: any) {
-    console.error("GET /api/images/[id] error:", err);
+  } catch (err: unknown) {
+    console.error(
+      "GET /api/images/[id] error:",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 }

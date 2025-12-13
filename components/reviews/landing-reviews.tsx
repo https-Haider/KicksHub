@@ -6,7 +6,7 @@ import { ReviewForm } from "./review-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, getSafeImageUrl } from "@/lib/utils";
 import {
   Quote,
   Star,
@@ -48,12 +48,12 @@ export function LandingReviews({ className }: LandingReviewsProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const fetchReviews = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/reviews?sort=newest&limit=6");
+      const response = await fetch("/api/reviews?sort=newest&limit=12");
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       setReviews(data.reviews || []);
@@ -71,20 +71,26 @@ export function LandingReviews({ className }: LandingReviewsProps) {
 
   const handleReviewSubmitted = () => {
     fetchReviews();
+    setCurrentPage(0); // Reset to first page to show new review
   };
 
-  const nextReview = () => {
-    setCurrentIndex((prev) => (prev + 1) % Math.max(1, reviews.length));
+  // Calculate pages (3 reviews per page on desktop)
+  const reviewsPerPage = 3;
+  const totalPages = Math.ceil(reviews.length / reviewsPerPage);
+
+  const nextPage = () => {
+    setCurrentPage((prev) => (prev + 1) % totalPages);
   };
 
-  const prevReview = () => {
-    setCurrentIndex(
-      (prev) => (prev - 1 + reviews.length) % Math.max(1, reviews.length)
-    );
+  const prevPage = () => {
+    setCurrentPage((prev) => (prev - 1 + totalPages) % totalPages);
   };
 
-  // Show 3 reviews at a time on desktop
-  const visibleReviews = reviews.slice(0, 3);
+  // Get visible reviews for current page
+  const visibleReviews = reviews.slice(
+    currentPage * reviewsPerPage,
+    (currentPage + 1) * reviewsPerPage
+  );
 
   if (isLoading) {
     return (
@@ -151,23 +157,48 @@ export function LandingReviews({ className }: LandingReviewsProps) {
         {/* Reviews Grid */}
         {visibleReviews.length > 0 ? (
           <>
-            <div className="grid gap-6 md:grid-cols-3 mb-8">
-              {visibleReviews.map((review) => (
-                <ReviewCard key={review._id} review={review} />
-              ))}
+            <div className="relative">
+              {/* Navigation Arrows */}
+              {totalPages > 1 && (
+                <>
+                  <button
+                    onClick={prevPage}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 p-2 rounded-full bg-background border border-border shadow-md hover:bg-muted transition-colors hidden md:flex items-center justify-center"
+                    aria-label="Previous reviews"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={nextPage}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 p-2 rounded-full bg-background border border-border shadow-md hover:bg-muted transition-colors hidden md:flex items-center justify-center"
+                    aria-label="Next reviews"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+
+              <div className="grid gap-6 md:grid-cols-3 mb-8">
+                {visibleReviews.map((review) => (
+                  <ReviewCard key={review._id} review={review} />
+                ))}
+              </div>
             </div>
 
-            {/* Navigation for more reviews */}
-            {reviews.length > 3 && (
+            {/* Pagination Dots */}
+            {totalPages > 1 && (
               <div className="flex justify-center gap-2 mb-8">
-                {reviews.slice(0, 6).map((_, idx) => (
+                {Array.from({ length: totalPages }).map((_, idx) => (
                   <button
                     key={idx}
+                    onClick={() => setCurrentPage(idx)}
                     className={cn(
                       "w-2 h-2 rounded-full transition-colors",
-                      idx < 3 ? "bg-primary" : "bg-muted-foreground/30"
+                      idx === currentPage
+                        ? "bg-primary"
+                        : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
                     )}
-                    aria-label={`Review ${idx + 1}`}
+                    aria-label={`Go to page ${idx + 1}`}
                   />
                 ))}
               </div>
@@ -224,14 +255,19 @@ function ReviewCard({ review }: { review: Review }) {
       {/* Images */}
       {review.images && review.images.length > 0 && (
         <div className="flex gap-2 mb-4 overflow-x-auto">
-          {review.images.slice(0, 3).map((img, idx) => (
-            <img
-              key={idx}
-              src={img}
-              alt={`Review image ${idx + 1}`}
-              className="w-16 h-16 object-cover rounded-md flex-shrink-0"
-            />
-          ))}
+          {review.images.slice(0, 3).map((img, idx) => {
+            const safeUrl = getSafeImageUrl(img);
+            if (!safeUrl || safeUrl === "/placeholder-image.png") return null;
+            return (
+              <img
+                key={idx}
+                src={safeUrl}
+                alt={`Review image ${idx + 1}`}
+                className="w-16 h-16 object-cover rounded-md flex-shrink-0"
+                loading="lazy"
+              />
+            );
+          })}
           {review.images.length > 3 && (
             <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center flex-shrink-0">
               <span className="text-xs text-muted-foreground">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { ReviewSummary } from "./review-summary";
 import { ReviewForm } from "./review-form";
 import { ReviewList } from "./review-list";
@@ -65,6 +65,10 @@ export function ReviewSection({
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Use ref to track current reviews length for pagination without causing re-renders
+  const reviewsLengthRef = useRef(0);
+  reviewsLengthRef.current = reviews.length;
+
   const fetchReviews = useCallback(
     async (reset: boolean = false) => {
       try {
@@ -75,7 +79,7 @@ export function ReviewSection({
           setIsLoadingMore(true);
         }
 
-        const offset = reset ? 0 : reviews.length;
+        const offset = reset ? 0 : reviewsLengthRef.current;
         const params = new URLSearchParams({
           productId: productId.toString(),
           sort: sortBy,
@@ -106,13 +110,13 @@ export function ReviewSection({
         setIsLoadingMore(false);
       }
     },
-    [productId, sortBy, reviews.length]
+    [productId, sortBy]
   );
 
-  // Initial fetch
+  // Initial fetch and refetch when sort changes
   useEffect(() => {
     fetchReviews(true);
-  }, [productId, sortBy]);
+  }, [fetchReviews]);
 
   const handleSortChange = (value: SortOption) => {
     setSortBy(value);

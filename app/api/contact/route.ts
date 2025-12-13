@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { siteConfig } from "@/lib/config";
 
 function createTransporter() {
   return nodemailer.createTransport({
@@ -127,15 +128,18 @@ export async function POST(req: Request) {
 
     await transporter.sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: "thriftshoes.boss@gmail.com",
+      to: siteConfig.contact.email,
       replyTo: email.trim(),
-      subject: `[KicksHub Contact] ${subject.trim()}`,
+      subject: `[${siteConfig.name} Contact] ${subject.trim()}`,
       html: htmlContent,
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (err: any) {
-    console.error("POST /api/contact error:", err);
+  } catch (err: unknown) {
+    console.error(
+      "POST /api/contact error:",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json(
       { error: "Failed to send message. Please try again later." },
       { status: 500 }

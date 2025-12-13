@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { useCart } from "@/lib/cart-context";
 import { CartButton } from "@/components/cart-button";
 import Image from "next/image";
+import { ProductImageGallery } from "@/components/product-image-gallery";
 
 export default function ProductDetailClient({ product }: { product: any }) {
   const [quantity, setQuantity] = useState(1);
@@ -120,24 +121,15 @@ export default function ProductDetailClient({ product }: { product: any }) {
       {/* Product Details */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid gap-12 md:grid-cols-2">
-          {/* Product Image */}
-          <div className="flex items-center justify-center">
-            <div className="w-full aspect-square rounded-lg overflow-hidden bg-muted relative">
-              {product.image ? (
-                <Image
-                  src={product.image}
-                  alt={`${product.name} - ${product.category} shoe`}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-cover"
-                />
-              ) : (
-                <img
-                  src="/placeholder.svg"
-                  alt="placeholder"
-                  className="w-full h-full object-cover"
-                />
-              )}
+          {/* Product Image Gallery */}
+          <div className="flex items-start justify-center">
+            <div className="w-full">
+              <ProductImageGallery
+                mainImage={product.image}
+                images={product.images}
+                productName={product.name}
+                category={product.category}
+              />
             </div>
           </div>
 

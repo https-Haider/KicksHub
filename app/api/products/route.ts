@@ -5,8 +5,11 @@ export async function GET() {
   try {
     const products = await getAllProducts();
     return NextResponse.json(products);
-  } catch (err: any) {
-    console.error("GET /api/products error:", err);
+  } catch (err: unknown) {
+    console.error(
+      "GET /api/products error:",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json({ error: "Internal" }, { status: 500 });
   }
 }
@@ -23,8 +26,11 @@ export async function POST(req: Request) {
     }
     const product = await addProduct(body);
     return NextResponse.json(product);
-  } catch (err: any) {
-    console.error("POST /api/products error:", err);
+  } catch (err: unknown) {
+    console.error(
+      "POST /api/products error:",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json({ error: "Internal" }, { status: 500 });
   }
 }

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAdmin } from "@/lib/admin-context";
 import type { Product } from "@/lib/products";
+import { X, Plus, GripVertical } from "lucide-react";
 
 export default function AdminProductsPage() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function AdminProductsPage() {
     name: "",
     price: 0,
     image: "",
+    images: [],
     category: "Casual",
     description: "",
     rating: 4.5,
@@ -58,12 +60,70 @@ export default function AdminProductsPage() {
     return null;
   }
 
+  // Helper function to upload image to Cloudinary
+  const uploadImageToCloudinary = async (
+    file: File
+  ): Promise<string | null> => {
+    // Try signed upload via server endpoint
+    try {
+      const signRes = await fetch("/api/cloudinary/sign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (signRes.ok) {
+        const sign = await signRes.json();
+        const { cloudName, apiKey, timestamp, signature } = sign;
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("api_key", apiKey);
+        fd.append("timestamp", String(timestamp));
+        fd.append("signature", signature);
+        const uploadRes = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          { method: "POST", body: fd }
+        );
+        const data = await uploadRes.json();
+        if (data?.secure_url) {
+          return data.secure_url;
+        }
+      }
+    } catch (err) {
+      console.warn("Signed upload failed, trying unsigned", err);
+    }
+
+    // Fallback: unsigned preset if provided
+    const cloudNamePublic = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const preset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+    if (!cloudNamePublic || !preset) {
+      alert("Cloudinary not configured");
+      return null;
+    }
+    const fd2 = new FormData();
+    fd2.append("file", file);
+    fd2.append("upload_preset", preset);
+    try {
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudNamePublic}/image/upload`,
+        { method: "POST", body: fd2 }
+      );
+      const data = await res.json();
+      if (data?.secure_url) {
+        return data.secure_url;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    return null;
+  };
+
   const handleAddProduct = () => {
     setEditingId(null);
     setFormData({
       name: "",
       price: 0,
       image: "",
+      images: [],
       category: "Casual",
       description: "",
       rating: 4.5,
@@ -84,6 +144,7 @@ export default function AdminProductsPage() {
       name: product.name,
       price: product.price,
       image: product.image,
+      images: product.images || [],
       category: product.category,
       description: product.description,
       rating: product.rating,
@@ -365,9 +426,18 @@ export default function AdminProductsPage() {
                       }
                       className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
                     >
-                      <option>Basketball</option>
-                      <option>Casual</option>
-                      <option>Running</option>
+                      <option value="Basketball">Basketball</option>
+                      <option value="Casual">Casual</option>
+                      <option value="Running">Running</option>
+                      {/* Show current category if it's not in standard list */}
+                      {formData.category &&
+                        !["Basketball", "Casual", "Running"].includes(
+                          formData.category
+                        ) && (
+                          <option value={formData.category}>
+                            {formData.category}
+                          </option>
+                        )}
                     </select>
                   </div>
                 </div>
@@ -469,133 +539,234 @@ export default function AdminProductsPage() {
 
                 {/* Removed Meta Keywords - keywords are mostly ignored by search engines. Keeping only title + description for SEO. */}
 
+                {/* Multiple Images Section */}
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Image URL
+                    Product Images (3-7 recommended)
                   </label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    First image will be the main product image. Drag to reorder.
+                  </p>
+
+                  {/* Image Preview Grid */}
+                  <div className="grid grid-cols-4 gap-3 mb-3">
+                    {/* Main Image */}
+                    {formData.image && (
+                      <div className="relative aspect-square rounded-md overflow-hidden border-2 border-primary bg-muted group">
+                        <img
+                          src={formData.image}
+                          alt="Main product image"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Move first additional image to main if available
+                              if (
+                                formData.images &&
+                                formData.images.length > 0
+                              ) {
+                                const [newMain, ...rest] = formData.images;
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  image: newMain,
+                                  images: rest,
+                                }));
+                              } else {
+                                setFormData((prev) => ({ ...prev, image: "" }));
+                              }
+                            }}
+                            className="p-1 rounded-full bg-red-500 hover:bg-red-600 text-white"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <span className="absolute bottom-1 left-1 text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
+                          Main
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Additional Images */}
+                    {formData.images?.map((img, index) => (
+                      <div
+                        key={index}
+                        className="relative aspect-square rounded-md overflow-hidden border border-border bg-muted group"
+                      >
+                        <img
+                          src={img}
+                          alt={`Product image ${index + 2}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Set this image as main
+                              const newImages = [...(formData.images || [])];
+                              newImages.splice(index, 1);
+                              if (formData.image) {
+                                newImages.unshift(formData.image);
+                              }
+                              setFormData((prev) => ({
+                                ...prev,
+                                image: img,
+                                images: newImages,
+                              }));
+                            }}
+                            className="p-1 rounded-full bg-primary hover:bg-primary/80 text-primary-foreground text-[10px]"
+                            title="Set as main image"
+                          >
+                            ★
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newImages = [...(formData.images || [])];
+                              newImages.splice(index, 1);
+                              setFormData((prev) => ({
+                                ...prev,
+                                images: newImages,
+                              }));
+                            }}
+                            className="p-1 rounded-full bg-red-500 hover:bg-red-600 text-white"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <span className="absolute bottom-1 left-1 text-[10px] bg-muted-foreground/80 text-white px-1.5 py-0.5 rounded">
+                          {index + 2}
+                        </span>
+                      </div>
+                    ))}
+
+                    {/* Add More Images Button */}
+                    {(!formData.image ||
+                      (formData.images?.length || 0) < 6) && (
+                      <label className="aspect-square rounded-md border-2 border-dashed border-border hover:border-primary/50 bg-muted/50 hover:bg-muted transition-colors cursor-pointer flex flex-col items-center justify-center gap-1">
+                        <Plus className="w-6 h-6 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          Add
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={async (e) => {
+                            const files = Array.from(e.target.files || []);
+                            if (files.length === 0) return;
+
+                            // Calculate how many more images we can add
+                            const currentTotal =
+                              (formData.image ? 1 : 0) +
+                              (formData.images?.length || 0);
+                            const maxToAdd = 7 - currentTotal;
+                            const filesToUpload = files.slice(0, maxToAdd);
+
+                            if (files.length > maxToAdd) {
+                              alert(
+                                `You can only add ${maxToAdd} more image(s). Maximum is 7 total.`
+                              );
+                            }
+
+                            // Upload all files
+                            for (const file of filesToUpload) {
+                              const url = await uploadImageToCloudinary(file);
+                              if (url) {
+                                setFormData((prev) => {
+                                  if (!prev.image) {
+                                    // Set as main image
+                                    return { ...prev, image: url };
+                                  } else {
+                                    // Add to additional images
+                                    return {
+                                      ...prev,
+                                      images: [...(prev.images || []), url],
+                                    };
+                                  }
+                                });
+                              }
+                            }
+                            // Reset input
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Manual URL Input */}
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      value={formData.image}
-                      onChange={(e) =>
-                        setFormData({ ...formData, image: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
-                      placeholder="/shoes/product.jpg or Cloudinary URL"
-                    />
-                    <div className="inline-flex items-center gap-2">
-                      <input
-                        ref={(window as any).__cloudinaryInputRef ?? undefined}
-                        id="admin-product-image-input"
-                        type="file"
-                        accept="image/*"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
+                      placeholder="Or paste image URL..."
+                      className="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const input = e.target as HTMLInputElement;
+                          const url = input.value.trim();
+                          if (!url) return;
 
-                          // Try signed upload via server endpoint
-                          try {
-                            const signRes = await fetch(
-                              "/api/cloudinary/sign",
-                              {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({}),
-                              }
-                            );
-                            if (signRes.ok) {
-                              const sign = await signRes.json();
-                              const {
-                                cloudName,
-                                apiKey,
-                                timestamp,
-                                signature,
-                              } = sign;
-                              const fd = new FormData();
-                              fd.append("file", file);
-                              fd.append("api_key", apiKey);
-                              fd.append("timestamp", String(timestamp));
-                              fd.append("signature", signature);
-                              // optional: you can add folder or other params if desired
-                              const uploadRes = await fetch(
-                                `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-                                {
-                                  method: "POST",
-                                  body: fd,
-                                }
-                              );
-                              const data = await uploadRes.json();
-                              if (data?.secure_url) {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  image: data.secure_url,
-                                }));
-                              } else {
-                                console.error(data);
-                                alert("Upload failed");
-                              }
-                              return;
-                            }
-                          } catch (err) {
-                            console.warn(
-                              "Signed upload failed, falling back to unsigned if available",
-                              err
-                            );
-                          }
-
-                          // fallback: unsigned preset if provided
-                          const cloudNamePublic =
-                            process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-                          const preset =
-                            process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-                          if (!cloudNamePublic || !preset) {
-                            alert(
-                              "Cloudinary not configured. Set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET in env, or configure server-side signing."
-                            );
+                          const currentTotal =
+                            (formData.image ? 1 : 0) +
+                            (formData.images?.length || 0);
+                          if (currentTotal >= 7) {
+                            alert("Maximum 7 images allowed");
                             return;
                           }
-                          const fd2 = new FormData();
-                          fd2.append("file", file);
-                          fd2.append("upload_preset", preset);
-                          try {
-                            const res = await fetch(
-                              `https://api.cloudinary.com/v1_1/${cloudNamePublic}/image/upload`,
-                              {
-                                method: "POST",
-                                body: fd2,
-                              }
-                            );
-                            const data = await res.json();
-                            if (data?.secure_url) {
-                              setFormData((prev) => ({
-                                ...prev,
-                                image: data.secure_url,
-                              }));
-                            } else {
-                              console.error(data);
-                              alert("Upload failed");
-                            }
-                          } catch (err) {
-                            console.error(err);
-                            alert("Upload error");
+
+                          if (!formData.image) {
+                            setFormData((prev) => ({ ...prev, image: url }));
+                          } else {
+                            setFormData((prev) => ({
+                              ...prev,
+                              images: [...(prev.images || []), url],
+                            }));
                           }
-                        }}
-                        className="hidden"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const input = document.getElementById(
-                            "admin-product-image-input"
-                          ) as HTMLInputElement | null;
-                          input?.click();
-                        }}
-                      >
-                        Upload
-                      </Button>
-                    </div>
+                          input.value = "";
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        const input = (e.target as HTMLElement)
+                          .previousElementSibling as HTMLInputElement;
+                        const url = input?.value?.trim();
+                        if (!url) return;
+
+                        const currentTotal =
+                          (formData.image ? 1 : 0) +
+                          (formData.images?.length || 0);
+                        if (currentTotal >= 7) {
+                          alert("Maximum 7 images allowed");
+                          return;
+                        }
+
+                        if (!formData.image) {
+                          setFormData((prev) => ({ ...prev, image: url }));
+                        } else {
+                          setFormData((prev) => ({
+                            ...prev,
+                            images: [...(prev.images || []), url],
+                          }));
+                        }
+                        input.value = "";
+                      }}
+                    >
+                      Add URL
+                    </Button>
                   </div>
+
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {(formData.image ? 1 : 0) + (formData.images?.length || 0)}{" "}
+                    of 7 images
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-2">

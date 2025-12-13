@@ -1,6 +1,6 @@
 // lib/orders.server.ts
 import crypto from "crypto";
-import { MongoClient } from "mongodb";
+import { MongoClient, WithId, Document } from "mongodb";
 
 export type OrderItem = {
   productId: number;
@@ -32,6 +32,29 @@ export type Order = {
   carrier?: string | null;
 };
 
+interface OrderDocument extends WithId<Document> {
+  id: string;
+  items?: OrderItem[];
+  subtotal?: number;
+  shipping?: number;
+  tax?: number;
+  total?: number;
+  customerName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  status?: string;
+  createdAt?: string;
+  otpHash?: string | null;
+  otpExpiresAt?: number | null;
+  otpLastSentAt?: number | null;
+  trackingNumber?: string | null;
+  carrier?: string | null;
+}
+
 const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://localhost:27017";
 const MONGODB_DB = process.env.MONGODB_DB ?? "edm";
 const MONGODB_COLLECTION = process.env.MONGODB_COLLECTION ?? "orders";
@@ -58,7 +81,7 @@ function makeOrderId(): string {
     .toUpperCase()}`;
 }
 
-function toOrder(doc: any): Order {
+function toOrder(doc: OrderDocument): Order {
   // ensure shape
   return {
     id: doc.id,
@@ -125,7 +148,7 @@ export async function updateOrderById(
   patch: Partial<Order>
 ): Promise<Order | null> {
   const col = await getCollection();
-  const update: any = { $set: { ...patch } };
+  const update = { $set: { ...patch } };
   await col.updateOne({ id }, update);
   const doc = await col.findOne({ id });
   return doc ? toOrder(doc) : null;
