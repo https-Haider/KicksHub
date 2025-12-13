@@ -19,6 +19,8 @@ export type Product = {
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string;
+  updatedAt?: string | Date;
+  createdAt?: string | Date;
 };
 
 interface ProductDocument extends WithId<Document> {
@@ -39,6 +41,8 @@ interface ProductDocument extends WithId<Document> {
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string;
+  updatedAt?: string | Date;
+  createdAt?: string | Date;
 }
 
 const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://localhost:27017";
@@ -80,6 +84,8 @@ function mapDocumentToProduct(d: ProductDocument): Product {
     seoTitle: d.seoTitle,
     seoDescription: d.seoDescription,
     seoKeywords: d.seoKeywords,
+    updatedAt: d.updatedAt,
+    createdAt: d.createdAt,
   };
 }
 

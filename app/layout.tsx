@@ -100,7 +100,6 @@ export default function RootLayout({
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/placeholder-logo.png" />
-        <link rel="canonical" href="/" />
         <meta name="theme-color" content="#000000" />
         {/* Preload critical images for LCP optimization */}
         <link

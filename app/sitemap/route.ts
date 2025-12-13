@@ -24,6 +24,16 @@ interface SitemapUrl {
   priority: number;
 }
 
+/** Escape special XML characters to produce valid XML */
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 export async function GET() {
   try {
     const products: Product[] = await getAllProducts();
@@ -82,7 +92,7 @@ export async function GET() {
 ${allUrls
   .map(
     (url) => `  <url>
-    <loc>${url.loc}</loc>
+    <loc>${escapeXml(url.loc)}</loc>
     <lastmod>${url.lastmod}</lastmod>
     <changefreq>${url.changefreq}</changefreq>
     <priority>${url.priority}</priority>
