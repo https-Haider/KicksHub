@@ -7,15 +7,12 @@ import {
   sendOrderDeliveredEmail,
 } from "@/lib/email.server";
 
-export async function GET(req: Request, ctx: { params: any }) {
+type Context = { params: { id: string } | Promise<{ id: string }> };
+
+export async function GET(req: Request, ctx: Context) {
   try {
-    // In some Next.js versions `params` can be a Promise — unwrap if needed.
-    const params = ctx?.params;
-    const resolvedParams =
-      params && typeof (params as any)?.then === "function"
-        ? await params
-        : params;
-    const id = resolvedParams?.id;
+    const params = await Promise.resolve(ctx.params);
+    const id = params.id;
     if (!id)
       return NextResponse.json({ error: "order id required" }, { status: 400 });
 
@@ -24,8 +21,11 @@ export async function GET(req: Request, ctx: { params: any }) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
     return NextResponse.json(order);
-  } catch (err: any) {
-    console.error("GET /api/orders/[id] error:", err);
+  } catch (err: unknown) {
+    console.error(
+      "GET /api/orders/[id] error:",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -33,14 +33,10 @@ export async function GET(req: Request, ctx: { params: any }) {
   }
 }
 
-export async function PATCH(req: Request, ctx: { params: any }) {
+export async function PATCH(req: Request, ctx: Context) {
   try {
-    const params = ctx?.params;
-    const resolvedParams =
-      params && typeof (params as any)?.then === "function"
-        ? await params
-        : params;
-    const id = resolvedParams?.id;
+    const params = await Promise.resolve(ctx.params);
+    const id = params.id;
     if (!id)
       return NextResponse.json({ error: "order id required" }, { status: 400 });
 
@@ -88,13 +84,19 @@ export async function PATCH(req: Request, ctx: { params: any }) {
           await sendOrderDeliveredEmail(updated);
         }
       }
-    } catch (err) {
-      console.error("Failed to send status update email:", err);
+    } catch (emailErr: unknown) {
+      console.error(
+        "Failed to send status update email:",
+        emailErr instanceof Error ? emailErr.message : emailErr
+      );
     }
 
     return NextResponse.json(updated);
-  } catch (err: any) {
-    console.error("PATCH /api/orders/[id] error:", err);
+  } catch (err: unknown) {
+    console.error(
+      "PATCH /api/orders/[id] error:",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

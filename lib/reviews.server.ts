@@ -1,4 +1,4 @@
-import { MongoClient, ObjectId } from "mongodb";
+import { MongoClient, ObjectId, Sort, WithId, Document } from "mongodb";
 
 export interface Review {
   _id?: string;
@@ -13,6 +13,26 @@ export interface Review {
   notHelpful: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// MongoDB document type for reviews (without _id for inserts)
+interface ReviewDocumentInput {
+  productId?: number;
+  rating: number;
+  content?: string;
+  images?: string[];
+  authorName: string;
+  authorEmail?: string;
+  verified?: boolean;
+  helpful?: number;
+  notHelpful?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// MongoDB document type for reviews (with _id from database)
+interface ReviewDocument extends ReviewDocumentInput {
+  _id: ObjectId;
 }
 
 export interface ReviewStats {
@@ -44,7 +64,44 @@ async function getClient() {
 
 async function getCollection() {
   const client = await getClient();
-  return client.db(MONGODB_DB).collection(REVIEWS_COLLECTION);
+  return client.db(MONGODB_DB).collection<ReviewDocument>(REVIEWS_COLLECTION);
+}
+
+// Helper function to convert MongoDB document to Review type
+function mapDocumentToReview(d: WithId<ReviewDocument>): Review {
+  return {
+    _id: d._id.toString(),
+    productId: d.productId,
+    rating: d.rating,
+    content: d.content,
+    images: d.images || [],
+    authorName: d.authorName,
+    authorEmail: d.authorEmail,
+    verified: d.verified ?? false,
+    helpful: d.helpful ?? 0,
+    notHelpful: d.notHelpful ?? 0,
+    createdAt: d.createdAt,
+    updatedAt: d.updatedAt,
+  };
+}
+
+// Helper to get sort option based on sort type
+function getSortOption(
+  sort?: "newest" | "oldest" | "highest" | "lowest" | "most-helpful"
+): Sort {
+  switch (sort) {
+    case "oldest":
+      return { createdAt: 1 };
+    case "highest":
+      return { rating: -1, createdAt: -1 };
+    case "lowest":
+      return { rating: 1, createdAt: -1 };
+    case "most-helpful":
+      return { helpful: -1, createdAt: -1 };
+    case "newest":
+    default:
+      return { createdAt: -1 };
+  }
 }
 
 // Get all reviews for a product
@@ -58,22 +115,7 @@ export async function getReviewsByProductId(
 ): Promise<Review[]> {
   const col = await getCollection();
 
-  let sortOption: any = { createdAt: -1 }; // default: newest first
-
-  switch (options?.sort) {
-    case "oldest":
-      sortOption = { createdAt: 1 };
-      break;
-    case "highest":
-      sortOption = { rating: -1, createdAt: -1 };
-      break;
-    case "lowest":
-      sortOption = { rating: 1, createdAt: -1 };
-      break;
-    case "most-helpful":
-      sortOption = { helpful: -1, createdAt: -1 };
-      break;
-  }
+  const sortOption = getSortOption(options?.sort);
 
   const cursor = col
     .find({ productId })
@@ -86,20 +128,7 @@ export async function getReviewsByProductId(
 
   const docs = await cursor.toArray();
 
-  return docs.map((d: any) => ({
-    _id: d._id.toString(),
-    productId: d.productId,
-    rating: d.rating,
-    content: d.content,
-    images: d.images || [],
-    authorName: d.authorName,
-    authorEmail: d.authorEmail,
-    verified: d.verified ?? false,
-    helpful: d.helpful ?? 0,
-    notHelpful: d.notHelpful ?? 0,
-    createdAt: d.createdAt,
-    updatedAt: d.updatedAt,
-  }));
+  return docs.map(mapDocumentToReview);
 }
 
 // Get review statistics for a product
@@ -163,22 +192,7 @@ export async function getAllReviews(options?: {
 }): Promise<Review[]> {
   const col = await getCollection();
 
-  let sortOption: any = { createdAt: -1 }; // default: newest first
-
-  switch (options?.sort) {
-    case "oldest":
-      sortOption = { createdAt: 1 };
-      break;
-    case "highest":
-      sortOption = { rating: -1, createdAt: -1 };
-      break;
-    case "lowest":
-      sortOption = { rating: 1, createdAt: -1 };
-      break;
-    case "most-helpful":
-      sortOption = { helpful: -1, createdAt: -1 };
-      break;
-  }
+  const sortOption = getSortOption(options?.sort);
 
   const cursor = col
     .find({})
@@ -191,20 +205,7 @@ export async function getAllReviews(options?: {
 
   const docs = await cursor.toArray();
 
-  return docs.map((d: any) => ({
-    _id: d._id.toString(),
-    productId: d.productId,
-    rating: d.rating,
-    content: d.content,
-    images: d.images || [],
-    authorName: d.authorName,
-    authorEmail: d.authorEmail,
-    verified: d.verified ?? false,
-    helpful: d.helpful ?? 0,
-    notHelpful: d.notHelpful ?? 0,
-    createdAt: d.createdAt,
-    updatedAt: d.updatedAt,
-  }));
+  return docs.map(mapDocumentToReview);
 }
 
 // Add a new review
@@ -217,7 +218,7 @@ export async function addReview(
   const col = await getCollection();
 
   const now = new Date();
-  const doc = {
+  const doc: ReviewDocumentInput = {
     ...review,
     helpful: 0,
     notHelpful: 0,
@@ -225,11 +226,14 @@ export async function addReview(
     updatedAt: now,
   };
 
-  const result = await col.insertOne(doc);
+  const result = await col.insertOne(doc as ReviewDocument);
 
   return {
     ...doc,
     _id: result.insertedId.toString(),
+    helpful: 0,
+    notHelpful: 0,
+    verified: review.verified,
   };
 }
 
@@ -328,7 +332,8 @@ export async function getReviewById(reviewId: string): Promise<Review | null> {
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     };
-  } catch {
+  } catch (err) {
+    console.error(`getReviewById error for reviewId="${reviewId}":`, err);
     return null;
   }
 }

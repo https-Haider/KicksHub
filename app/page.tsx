@@ -5,9 +5,10 @@ import { CartButton } from "@/components/cart-button";
 import { getAllProducts } from "@/lib/products.server";
 import { getProductSlug } from "@/lib/products";
 import { LandingReviewsWrapper } from "@/components/landing-reviews-wrapper";
+import { ImageIcon } from "lucide-react";
 
 export default async function Home() {
-  // Fetch products server-side and pick the shoes category items for the hero/featured section.
+  // Fetch products server-side for the featured section
   let all: any[] = [];
   try {
     all = await getAllProducts();
@@ -16,24 +17,9 @@ export default async function Home() {
     all = [];
   }
 
-  // pick products whose category contains "shoe" (case-insensitive) as featured
-  const shoes = (all || []).filter((p: any) =>
-    String(p.category || "")
-      .toLowerCase()
-      .includes("shoe")
-  );
-  // show exactly four featured shoes on the landing page
-  const featuredProducts = shoes.slice(0, 4);
+  // Show first 4 products as featured (all categories are shoes/sneakers)
+  const featuredProducts = (all || []).slice(0, 4);
 
-  // show some more products (non-shoe) on the landing page as a secondary grid
-  const moreProducts = (all || [])
-    .filter(
-      (p: any) =>
-        !String(p.category || "")
-          .toLowerCase()
-          .includes("shoe")
-    )
-    .slice(0, 8);
   return (
     <main className="min-h-screen bg-background">
       {/* Navigation */}
@@ -141,65 +127,10 @@ export default async function Home() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {featuredProducts.map((product) => (
-              <Link
-                key={product.id}
-                href={`/products/${getProductSlug(product)}`}
-              >
-                <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group cursor-pointer">
-                  <div className="relative h-64 overflow-hidden bg-muted">
-                    <img
-                      src={product.image || "/placeholder.svg"}
-                      alt={product.name || "Product image"}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {/* category badge removed from featured card */}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
-                      {product.name}
-                    </h3>
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-primary">
-                        PKR {product.price}
-                      </span>
-                      <Button size="sm" variant="outline">
-                        View
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
-          </div>
-
-          <div className="mt-12 text-center">
-            <Link href="/products">
-              <Button size="lg" variant="outline">
-                View All Products
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* More Products Section (other categories) */}
-      {moreProducts.length > 0 && (
-        <section className="py-16 bg-background" aria-label="More products">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-8 text-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                More Products
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Explore other categories from our collection.
-              </p>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {moreProducts.map((product) => (
+            {featuredProducts.map((product) => {
+              const totalImages =
+                (product.image ? 1 : 0) + (product.images?.length || 0);
+              return (
                 <Link
                   key={product.id}
                   href={`/products/${getProductSlug(product)}`}
@@ -208,9 +139,17 @@ export default async function Home() {
                     <div className="relative h-64 overflow-hidden bg-muted">
                       <img
                         src={product.image || "/placeholder.svg"}
-                        alt={product.name}
+                        alt={product.name || "Product image"}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
+                      {totalImages > 1 && (
+                        <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md bg-black/60 text-white text-xs font-medium">
+                          <ImageIcon className="w-3 h-3" />
+                          <span>{totalImages}</span>
+                        </div>
+                      )}
                     </div>
                     <div className="p-4">
                       <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
@@ -227,17 +166,19 @@ export default async function Home() {
                     </div>
                   </Card>
                 </Link>
-              ))}
-            </div>
-
-            <div className="mt-8 text-center">
-              <Link href="/products">
-                <Button variant="outline">View All Products</Button>
-              </Link>
-            </div>
+              );
+            })}
           </div>
-        </section>
-      )}
+
+          <div className="mt-12 text-center">
+            <Link href="/products">
+              <Button size="lg" variant="outline">
+                View All Products
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Trust Section */}
       <section className="py-16 bg-background" aria-label="Why choose us">

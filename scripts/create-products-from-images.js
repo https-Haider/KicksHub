@@ -82,7 +82,7 @@ async function main() {
       name,
       price,
       image: `/api/images/${fileId}`,
-      category: "Shoes",
+      category: "Casual",
       description: `Photo: ${file}`,
       rating: 4.6,
       reviews: 100,

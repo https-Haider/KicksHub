@@ -79,7 +79,15 @@ export function ReviewForm({
       if (!uploadRes.ok) throw new Error("Failed to upload image");
 
       const data = await uploadRes.json();
-      return data.secure_url;
+      const secureUrl = data.secure_url;
+
+      // Validate that the URL is from Cloudinary
+      if (!secureUrl || !secureUrl.includes("cloudinary.com")) {
+        console.error("Invalid upload response - not a Cloudinary URL");
+        return null;
+      }
+
+      return secureUrl;
     } catch (err) {
       console.error("Upload error:", err);
       return null;

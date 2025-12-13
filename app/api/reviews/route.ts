@@ -33,7 +33,7 @@ export async function GET(req: Request) {
     ]);
 
     return NextResponse.json({ reviews, stats });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("GET /api/reviews error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
@@ -62,19 +62,45 @@ export async function POST(req: Request) {
       );
     }
 
+    // Validate image URLs - only allow Cloudinary URLs
+    let validatedImages: string[] = [];
+    if (Array.isArray(body.images) && body.images.length > 0) {
+      validatedImages = body.images.filter((url: unknown) => {
+        if (typeof url !== "string") return false;
+        try {
+          const parsed = new URL(url);
+          return (
+            parsed.protocol === "https:" &&
+            (parsed.hostname === "res.cloudinary.com" ||
+              parsed.hostname.endsWith(".cloudinary.com"))
+          );
+        } catch {
+          return false;
+        }
+      });
+      // If some images were filtered out, log it
+      if (validatedImages.length !== body.images.length) {
+        console.warn(
+          `Filtered ${
+            body.images.length - validatedImages.length
+          } invalid image URLs from review submission`
+        );
+      }
+    }
+
     // Sanitize inputs - productId is optional for site-wide reviews
     const review = await addReview({
       productId: body.productId || undefined,
       rating: Math.round(body.rating),
       content: body.content?.trim() || undefined,
-      images: Array.isArray(body.images) ? body.images : undefined,
+      images: validatedImages.length > 0 ? validatedImages : undefined,
       authorName: body.authorName.trim(),
       authorEmail: body.authorEmail?.trim() || undefined,
       verified: body.verified || false,
     });
 
     return NextResponse.json(review, { status: 201 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("POST /api/reviews error:", err);
     return NextResponse.json(
       { error: "Internal server error" },

@@ -16,9 +16,14 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
+  // Derive categories from actual products + standard ones
+  const standardCategories = ["Running", "Casual", "Basketball"];
   const categories = useMemo(() => {
-    // Always return an empty category list so only "All Products" is shown.
-    return [];
+    const productCategories = new Set<string>(standardCategories);
+    products.forEach((p) => {
+      if (p.category) productCategories.add(p.category);
+    });
+    return Array.from(productCategories).sort();
   }, [products]);
 
   useEffect(() => {

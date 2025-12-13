@@ -1,5 +1,22 @@
 import nodemailer from "nodemailer";
 
+interface OrderItem {
+  productId: number;
+  productName: string;
+  price: number;
+  quantity: number;
+}
+
+interface Order {
+  id: string;
+  email: string;
+  customerName?: string;
+  items: OrderItem[];
+  total: number;
+  trackingNumber?: string | null;
+  carrier?: string | null;
+}
+
 function createTransporter() {
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -12,7 +29,7 @@ function createTransporter() {
   });
 }
 
-function escapeHtml(s: any) {
+function escapeHtml(s: string | number | undefined | null) {
   return String(s || "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -25,12 +42,12 @@ function formatMoney(n: number) {
   return `PKR ${Math.round(n)}`;
 }
 
-function itemsHtml(items: any[]) {
+function itemsHtml(items: OrderItem[]) {
   if (!items || items.length === 0)
     return "<tr><td colspan=3 style='padding:8px;'>No items</td></tr>";
   return items
     .map(
-      (it: any) =>
+      (it: OrderItem) =>
         `<tr><td style='padding:8px;border-bottom:1px solid #eee;'>${escapeHtml(
           it.productName
         )} (ID: ${escapeHtml(
@@ -44,7 +61,7 @@ function itemsHtml(items: any[]) {
     .join("");
 }
 
-export async function sendOrderShippedEmail(order: any) {
+export async function sendOrderShippedEmail(order: Order) {
   try {
     const transporter = createTransporter();
     const items = itemsHtml(order.items || []);
@@ -99,12 +116,12 @@ export async function sendOrderShippedEmail(order: any) {
   }
 }
 
-export async function sendOrderDeliveredEmail(order: any) {
+export async function sendOrderDeliveredEmail(order: Order) {
   try {
     const transporter = createTransporter();
     const itemsList = (order.items || [])
       .map(
-        (it: any) =>
+        (it: OrderItem) =>
           `${escapeHtml(it.productName)} (ID: ${escapeHtml(it.productId)})`
       )
       .join(", ");

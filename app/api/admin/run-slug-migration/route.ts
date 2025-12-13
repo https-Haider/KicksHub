@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
-import { MongoClient } from "mongodb";
+import { MongoClient, WithId, Document } from "mongodb";
 
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const MONGODB_DB = process.env.MONGODB_DB || "edm";
 const PRODUCTS_COLLECTION =
   process.env.MONGODB_PRODUCTS_COLLECTION || "products";
 const MIGRATION_SECRET = process.env.MIGRATION_SECRET || "";
+
+interface ProductDocument extends WithId<Document> {
+  slug?: string;
+  name?: string;
+  sku?: string;
+  id?: string | number;
+}
 
 function slugify(input: string | number) {
   return String(input || "")
@@ -27,7 +34,9 @@ export async function POST(req: Request) {
   const client = new MongoClient(MONGODB_URI);
   try {
     await client.connect();
-    const col = client.db(MONGODB_DB).collection(PRODUCTS_COLLECTION);
+    const col = client
+      .db(MONGODB_DB)
+      .collection<ProductDocument>(PRODUCTS_COLLECTION);
 
     const existing = await col
       .find(
@@ -35,7 +44,7 @@ export async function POST(req: Request) {
         { projection: { slug: 1 } }
       )
       .toArray();
-    const existingSlugs = new Set(existing.map((d: any) => String(d.slug)));
+    const existingSlugs = new Set(existing.map((d) => String(d.slug)));
 
     const candidates = await col
       .find({
@@ -45,10 +54,10 @@ export async function POST(req: Request) {
 
     let updated = 0;
     for (const p of candidates) {
-      const base = slugify((p as any).name || (p as any).sku || (p as any).id);
-      let candidate = base || `product-${(p as any).id ?? Date.now()}`;
+      const base = slugify(p.name || p.sku || p.id || "");
+      let candidate = base || `product-${p.id ?? Date.now()}`;
       if (existingSlugs.has(candidate)) {
-        const withId = `${candidate}-${(p as any).id ?? "x"}`;
+        const withId = `${candidate}-${p.id ?? "x"}`;
         if (!existingSlugs.has(withId)) {
           candidate = withId;
         } else {
@@ -57,10 +66,7 @@ export async function POST(req: Request) {
           candidate = `${candidate}-${i}`;
         }
       }
-      await col.updateOne(
-        { _id: (p as any)._id },
-        { $set: { slug: candidate } }
-      );
+      await col.updateOne({ _id: p._id }, { $set: { slug: candidate } });
       existingSlugs.add(candidate);
       updated++;
     }
@@ -72,7 +78,7 @@ export async function POST(req: Request) {
         { slug: 1 },
         { unique: true, name: "unique_slug" }
       );
-    } catch (e: any) {
+    } catch {
       // If it already exists or there are dupes, surface info
       indexName = undefined;
     }
@@ -81,8 +87,11 @@ export async function POST(req: Request) {
       updated,
       index: indexName || "existing or could not be created",
     });
-  } catch (err: any) {
-    console.error("run-slug-migration error", err);
+  } catch (err: unknown) {
+    console.error(
+      "run-slug-migration error",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json({ error: "internal" }, { status: 500 });
   } finally {
     await client.close();

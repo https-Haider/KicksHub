@@ -27,8 +27,11 @@ export async function GET(req: Request, ctx: Context) {
     }
 
     return NextResponse.json(review);
-  } catch (err: any) {
-    console.error("GET /api/reviews/[id] error:", err);
+  } catch (err: unknown) {
+    console.error(
+      "GET /api/reviews/[id] error:",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -65,7 +68,8 @@ export async function PATCH(req: Request, ctx: Context) {
     }
 
     // Handle review update
-    const updates: any = {};
+    const updates: Partial<{ rating: number; title: string; content: string }> =
+      {};
     if (body.rating !== undefined) {
       if (body.rating < 1 || body.rating > 5) {
         return NextResponse.json(
@@ -95,8 +99,11 @@ export async function PATCH(req: Request, ctx: Context) {
     }
 
     return NextResponse.json(review);
-  } catch (err: any) {
-    console.error("PATCH /api/reviews/[id] error:", err);
+  } catch (err: unknown) {
+    console.error(
+      "PATCH /api/reviews/[id] error:",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -123,8 +130,11 @@ export async function DELETE(req: Request, ctx: Context) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    console.error("DELETE /api/reviews/[id] error:", err);
+  } catch (err: unknown) {
+    console.error(
+      "DELETE /api/reviews/[id] error:",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

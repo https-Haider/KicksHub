@@ -8,6 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  siteConfig,
+  getWhatsAppLink,
+  getEmailLink,
+  getPhoneLink,
+} from "@/lib/config";
+import {
   Mail,
   Phone,
   MapPin,
@@ -111,10 +117,10 @@ export default function ContactPage() {
               <CardContent>
                 <p className="text-muted-foreground">Call or WhatsApp us at:</p>
                 <a
-                  href="tel:+923491441882"
+                  href={getPhoneLink()}
                   className="text-lg font-semibold hover:text-primary transition-colors"
                 >
-                  +92 349 144 1882
+                  {siteConfig.contact.phoneFormatted}
                 </a>
               </CardContent>
             </Card>
@@ -129,10 +135,10 @@ export default function ContactPage() {
               <CardContent>
                 <p className="text-muted-foreground">Send us an email at:</p>
                 <a
-                  href="mailto:thriftshoes.boss@gmail.com"
+                  href={getEmailLink()}
                   className="text-lg font-semibold hover:text-primary transition-colors"
                 >
-                  thriftshoes.boss@gmail.com
+                  {siteConfig.contact.email}
                 </a>
               </CardContent>
             </Card>
@@ -147,9 +153,9 @@ export default function ContactPage() {
               <CardContent>
                 <p className="text-muted-foreground">Visit our store:</p>
                 <p className="font-semibold">
-                  Shop #12, Liberty Market
+                  {siteConfig.contact.address.line1}
                   <br />
-                  Lahore, Pakistan
+                  {siteConfig.contact.address.line2}
                 </p>
               </CardContent>
             </Card>
@@ -164,11 +170,15 @@ export default function ContactPage() {
               <CardContent className="space-y-1">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Mon - Sat:</span>
-                  <span className="font-medium">11:00 AM - 9:00 PM</span>
+                  <span className="font-medium">
+                    {siteConfig.businessHours.weekdays}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Sunday:</span>
-                  <span className="font-medium">2:00 PM - 8:00 PM</span>
+                  <span className="font-medium">
+                    {siteConfig.businessHours.sunday}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -181,7 +191,7 @@ export default function ContactPage() {
               <CardContent>
                 <div className="flex gap-4">
                   <a
-                    href="https://instagram.com/kickshub"
+                    href={siteConfig.social.instagram}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-3 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground transition-colors"
@@ -189,7 +199,7 @@ export default function ContactPage() {
                     <Instagram className="h-5 w-5" />
                   </a>
                   <a
-                    href="https://facebook.com/kickshub"
+                    href={siteConfig.social.facebook}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-3 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground transition-colors"
@@ -197,7 +207,7 @@ export default function ContactPage() {
                     <Facebook className="h-5 w-5" />
                   </a>
                   <a
-                    href="https://wa.me/923491441882"
+                    href={getWhatsAppLink()}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-3 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground transition-colors"

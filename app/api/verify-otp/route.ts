@@ -21,17 +21,35 @@ function createTransporter() {
   });
 }
 
+interface OrderItem {
+  productName: string;
+  quantity: number;
+  price: number;
+}
+
+interface Order {
+  id: string;
+  email: string;
+  customerName?: string;
+  items: OrderItem[];
+  total: number;
+  otpHash?: string | null;
+  otpExpiresAt?: number | null;
+  otpLastSentAt?: number | null;
+  status?: string;
+}
+
 function formatMoney(n: number) {
   // display as PKR without decimals
   return `PKR ${Math.round(n)}`;
 }
 
-function renderItemsHtml(items: any[]) {
+function renderItemsHtml(items: OrderItem[]) {
   if (!items || items.length === 0)
     return "<tr><td colspan=3 style='padding:8px;'>No items</td></tr>";
   return items
     .map(
-      (it: any) =>
+      (it: OrderItem) =>
         `<tr><td style='padding:8px;border-bottom:1px solid #eee;'>${escapeHtml(
           it.productName
         )}</td><td style='padding:8px;border-bottom:1px solid #eee;text-align:center;'>x${
@@ -43,7 +61,7 @@ function renderItemsHtml(items: any[]) {
     .join("");
 }
 
-function escapeHtml(s: any) {
+function escapeHtml(s: string | number | undefined) {
   return String(s)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -52,7 +70,7 @@ function escapeHtml(s: any) {
     .replace(/'/g, "&#39;");
 }
 
-function confirmationHtml(order: any) {
+function confirmationHtml(order: Order) {
   const itemsHtml = renderItemsHtml(order.items || []);
   return `
   <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial; color:#111;">
@@ -141,8 +159,11 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
-    console.error("verify-otp error:", err);
+  } catch (err: unknown) {
+    console.error(
+      "verify-otp error:",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

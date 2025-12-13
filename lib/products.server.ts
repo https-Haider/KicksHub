@@ -1,4 +1,4 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, WithId, Document } from "mongodb";
 import { slugify as localSlugify } from "@/lib/products";
 
 export type Product = {
@@ -7,6 +7,7 @@ export type Product = {
   slug?: string;
   price: number;
   image: string;
+  images?: string[]; // Additional images (3-7 total including main image)
   category: string;
   description?: string;
   rating?: number;
@@ -19,6 +20,26 @@ export type Product = {
   seoDescription?: string;
   seoKeywords?: string;
 };
+
+interface ProductDocument extends WithId<Document> {
+  id: number;
+  name: string;
+  slug?: string;
+  price: number;
+  image: string;
+  images?: string[];
+  category: string;
+  description?: string;
+  rating?: number;
+  reviews?: number;
+  inStock?: boolean;
+  sku?: string;
+  sizes?: string[];
+  condition?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+}
 
 const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://localhost:27017";
 const MONGODB_DB = process.env.MONGODB_DB ?? "edm";
@@ -37,18 +58,17 @@ async function getClient() {
 
 async function getCollection() {
   const client = await getClient();
-  return client.db(MONGODB_DB).collection(PRODUCTS_COLLECTION);
+  return client.db(MONGODB_DB).collection<ProductDocument>(PRODUCTS_COLLECTION);
 }
 
-export async function getAllProducts(): Promise<Product[]> {
-  const col = await getCollection();
-  const docs = await col.find({}).sort({ id: -1 }).toArray();
-  return docs.map((d: any) => ({
+function mapDocumentToProduct(d: ProductDocument): Product {
+  return {
     id: d.id,
     name: d.name,
     slug: d.slug,
     price: d.price,
     image: d.image,
+    images: d.images,
     category: d.category,
     description: d.description,
     rating: d.rating,
@@ -60,31 +80,20 @@ export async function getAllProducts(): Promise<Product[]> {
     seoTitle: d.seoTitle,
     seoDescription: d.seoDescription,
     seoKeywords: d.seoKeywords,
-  }));
+  };
+}
+
+export async function getAllProducts(): Promise<Product[]> {
+  const col = await getCollection();
+  const docs = await col.find({}).sort({ id: -1 }).toArray();
+  return docs.map((d) => mapDocumentToProduct(d));
 }
 
 export async function getProductById(id: number): Promise<Product | null> {
   const col = await getCollection();
   const doc = await col.findOne({ id });
   if (!doc) return null;
-  return {
-    id: doc.id,
-    name: doc.name,
-    slug: doc.slug,
-    price: doc.price,
-    image: doc.image,
-    category: doc.category,
-    description: doc.description,
-    rating: doc.rating,
-    reviews: doc.reviews,
-    inStock: doc.inStock,
-    sku: doc.sku,
-    sizes: doc.sizes,
-    condition: doc.condition,
-    seoTitle: doc.seoTitle,
-    seoDescription: doc.seoDescription,
-    seoKeywords: doc.seoKeywords,
-  };
+  return mapDocumentToProduct(doc);
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -154,7 +163,7 @@ export async function addProduct(
     product.slug || product.name || nextId
   );
   const doc = { ...product, id: nextId, slug };
-  await col.insertOne(doc);
+  await col.insertOne(doc as ProductDocument);
   return { ...doc };
 }
 
@@ -163,7 +172,7 @@ export async function updateProduct(
   updates: Partial<Product>
 ): Promise<Product | null> {
   const col = await getCollection();
-  const set: any = { ...updates };
+  const set: Partial<Product> = { ...updates };
   // If name or slug is being updated, re-compute a unique slug unless explicitly set
   if (typeof updates.slug === "string" && updates.slug.trim()) {
     set.slug = await ensureUniqueSlug(col, updates.slug.trim(), id);
@@ -176,25 +185,7 @@ export async function updateProduct(
     { returnDocument: "after" }
   );
   if (!res.value) return null;
-  const d: any = res.value;
-  return {
-    id: d.id,
-    name: d.name,
-    slug: d.slug,
-    price: d.price,
-    image: d.image,
-    category: d.category,
-    description: d.description,
-    rating: d.rating,
-    reviews: d.reviews,
-    inStock: d.inStock,
-    sku: d.sku,
-    sizes: d.sizes,
-    condition: d.condition,
-    seoTitle: d.seoTitle,
-    seoDescription: d.seoDescription,
-    seoKeywords: d.seoKeywords,
-  };
+  return mapDocumentToProduct(res.value);
 }
 
 export async function deleteProduct(id: number): Promise<boolean> {
@@ -216,13 +207,12 @@ async function ensureUniqueSlug(
   let candidate = base;
   // allow keeping existing slug for current document
   const exists = async (s: string) => {
-    const q: any = { slug: s };
     if (typeof currentId === "number") {
       // exclude current document when checking for conflicts
       const clash = await col.findOne({ slug: s, id: { $ne: currentId } });
       return !!clash;
     }
-    const clash = await col.findOne(q);
+    const clash = await col.findOne({ slug: s });
     return !!clash;
   };
   if (await exists(candidate)) {

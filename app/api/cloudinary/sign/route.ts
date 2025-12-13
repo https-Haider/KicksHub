@@ -36,8 +36,11 @@ export async function POST(req: Request) {
       timestamp,
       signature,
     });
-  } catch (err: any) {
-    console.error("POST /api/cloudinary/sign error:", err);
+  } catch (err: unknown) {
+    console.error(
+      "POST /api/cloudinary/sign error:",
+      err instanceof Error ? err.message : err
+    );
     return NextResponse.json({ error: "Internal" }, { status: 500 });
   }
 }
