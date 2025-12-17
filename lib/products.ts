@@ -10,6 +10,7 @@ export interface Product {
   rating: number;
   reviews: number;
   inStock: boolean;
+  stockQuantity?: number; // Number of items in stock
   sku: string;
   sizes?: string[];
   condition: "like-new" | "excellent" | "good" | "fair";

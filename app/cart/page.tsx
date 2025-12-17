@@ -86,8 +86,11 @@ export default function CartPage() {
             <div className="lg:col-span-2">
               <Card className="overflow-hidden">
                 <div className="divide-y divide-border">
-                  {items.map((item) => (
-                    <div key={item.product.id} className="p-6 flex gap-6">
+                  {items.map((item, index) => (
+                    <div
+                      key={`${item.product.id}-${item.selectedSize || index}`}
+                      className="p-6 flex gap-6"
+                    >
                       {/* Product Image */}
                       <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
                         <img
@@ -104,13 +107,21 @@ export default function CartPage() {
                         <Link
                           href={`/products/${getProductSlug(item.product)}`}
                         >
-                          <h3 className="font-semibold text-foreground hover:text-primary transition-colors mb-2">
+                          <h3 className="font-semibold text-foreground hover:text-primary transition-colors mb-1">
                             {item.product.name}
                           </h3>
                         </Link>
-                        <p className="text-sm text-muted-foreground mb-4">
+                        <p className="text-sm text-muted-foreground mb-1">
                           {item.product.category}
                         </p>
+                        {item.selectedSize && (
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Size:{" "}
+                            <span className="font-medium text-foreground">
+                              EU {item.selectedSize}
+                            </span>
+                          </p>
+                        )}
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-bold text-primary">
                             PKR {Math.round(item.product.price)}
@@ -121,7 +132,8 @@ export default function CartPage() {
                                 onClick={() =>
                                   updateQuantity(
                                     item.product.id,
-                                    item.quantity - 1
+                                    item.quantity - 1,
+                                    item.selectedSize
                                   )
                                 }
                                 className="px-3 py-1 hover:bg-muted transition-colors"
@@ -135,7 +147,8 @@ export default function CartPage() {
                                 onClick={() =>
                                   updateQuantity(
                                     item.product.id,
-                                    item.quantity + 1
+                                    item.quantity + 1,
+                                    item.selectedSize
                                   )
                                 }
                                 className="px-3 py-1 hover:bg-muted transition-colors"
@@ -144,7 +157,9 @@ export default function CartPage() {
                               </button>
                             </div>
                             <button
-                              onClick={() => removeItem(item.product.id)}
+                              onClick={() =>
+                                removeItem(item.product.id, item.selectedSize)
+                              }
                               className="text-sm text-destructive hover:text-destructive/80 transition-colors font-medium"
                             >
                               Remove

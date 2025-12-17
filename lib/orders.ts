@@ -11,6 +11,7 @@ export interface OrderItem {
   productName: string;
   price: number;
   quantity: number;
+  selectedSize?: number | string;
 }
 
 export interface Order {
