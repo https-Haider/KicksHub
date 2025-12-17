@@ -18,18 +18,22 @@ export function ProductImageGallery({
   productName,
   category,
 }: ProductImageGalleryProps) {
-  // Combine main image with additional images
-  const allImages = [mainImage, ...(images || [])].filter(Boolean);
+  // Combine main image with additional images, remove duplicates
+  const allImages = Array.from(
+    new Set([mainImage, ...(images || [])].filter(Boolean))
+  );
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
 
   const selectedImage = allImages[selectedIndex] || mainImage;
 
-  const goToPrevious = () => {
+  const goToPrevious = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setSelectedIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
   };
 
-  const goToNext = () => {
+  const goToNext = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setSelectedIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
   };
 
@@ -81,28 +85,22 @@ export function ProductImageGallery({
           )}
         </div>
 
-        {/* Navigation Arrows - Only show if more than 1 image */}
+        {/* Navigation Arrows - Always visible if more than 1 image */}
         {allImages.length > 1 && (
           <>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                goToPrevious();
-              }}
-              className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+              onClick={goToPrevious}
+              className="absolute left-2 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/90 hover:bg-background shadow-lg transition-all border border-border z-10"
               aria-label="Previous image"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-6 h-6" />
             </button>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                goToNext();
-              }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+              onClick={goToNext}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/90 hover:bg-background shadow-lg transition-all border border-border z-10"
               aria-label="Next image"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-6 h-6" />
             </button>
           </>
         )}

@@ -13,9 +13,13 @@ import { ProductImageGallery } from "@/components/product-image-gallery";
 
 export default function ProductDetailClient({ product }: { product: any }) {
   const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState<number | string | null>(
+    null
+  );
   const { addItem } = useCart();
   const [addedToCart, setAddedToCart] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [sizeError, setSizeError] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -44,7 +48,13 @@ export default function ProductDetailClient({ product }: { product: any }) {
 
   const handleAddToCart = () => {
     if (product) {
-      addItem(product, quantity);
+      // Check if size selection is required
+      if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+        setSizeError(true);
+        return;
+      }
+      setSizeError(false);
+      addItem(product, quantity, selectedSize || undefined);
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2000);
     }
@@ -54,7 +64,13 @@ export default function ProductDetailClient({ product }: { product: any }) {
 
   const handleBuyNow = () => {
     if (product) {
-      addItem(product, quantity);
+      // Check if size selection is required
+      if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+        setSizeError(true);
+        return;
+      }
+      setSizeError(false);
+      addItem(product, quantity, selectedSize || undefined);
       // navigate straight to checkout (cart will contain this item)
       router.push("/checkout");
     }
@@ -161,13 +177,78 @@ export default function ProductDetailClient({ product }: { product: any }) {
               />
             </div>
 
+            {/* Available Sizes */}
+            {product.sizes && product.sizes.length > 0 && (
+              <div>
+                <h2 className="font-semibold text-foreground mb-3">
+                  Select Size <span className="text-destructive">*</span>
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {product.sizes.map((size: number | string) => (
+                    <button
+                      key={size}
+                      onClick={() => {
+                        setSelectedSize(size);
+                        setSizeError(false);
+                      }}
+                      className={`px-4 py-2 border rounded-md text-sm font-medium transition-all ${
+                        selectedSize === size
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-muted/50 text-foreground hover:border-primary hover:bg-muted"
+                      }`}
+                    >
+                      EU {size}
+                    </button>
+                  ))}
+                </div>
+                {sizeError && (
+                  <p className="text-destructive text-sm mt-2">
+                    Please select a size
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Condition Badge */}
+            {product.condition && (
+              <div>
+                <h2 className="font-semibold text-foreground mb-3">
+                  Condition
+                </h2>
+                <span
+                  className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                    product.condition === "like-new"
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                      : product.condition === "excellent"
+                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                      : product.condition === "good"
+                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                      : "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                  }`}
+                >
+                  {product.condition === "like-new"
+                    ? "Like New"
+                    : product.condition === "excellent"
+                    ? "Excellent"
+                    : product.condition === "good"
+                    ? "Good"
+                    : "Fair"}
+                </span>
+              </div>
+            )}
+
             <div className="space-y-4">
               <div>
                 <label
                   htmlFor="quantity"
                   className="block text-sm font-medium text-foreground mb-2"
                 >
-                  Quantity
+                  Quantity{" "}
+                  {product.stockQuantity && (
+                    <span className="text-muted-foreground">
+                      ({product.stockQuantity} available)
+                    </span>
+                  )}
                 </label>
                 <div className="flex items-center gap-4">
                   <button
@@ -186,8 +267,12 @@ export default function ProductDetailClient({ product }: { product: any }) {
                     {quantity}
                   </span>
                   <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="px-4 py-2 border border-border rounded-md hover:bg-muted transition-colors"
+                    onClick={() => {
+                      const maxQty = product.stockQuantity ?? 99;
+                      setQuantity(Math.min(quantity + 1, maxQty));
+                    }}
+                    disabled={quantity >= (product.stockQuantity ?? 99)}
+                    className="px-4 py-2 border border-border rounded-md hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="Increase quantity"
                   >
                     +

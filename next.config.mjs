@@ -3,6 +3,10 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Set Turbopack root to fix workspace root issue
+  turbopack: {
+    root: process.cwd(),
+  },
   images: {
     // Enable image optimization for better LCP
     remotePatterns: [
@@ -14,6 +18,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "*.cloudinary.com",
       },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
     ],
     // Optimize image formats
     formats: ["image/avif", "image/webp"],
@@ -22,9 +30,10 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   // Enable experimental features for better performance
-  experimental: {
-    optimizeCss: true,
-  },
+  // Note: optimizeCss disabled due to critters compatibility issues with Next.js 16
+  // experimental: {
+  //   optimizeCss: true,
+  // },
 };
 
 export default nextConfig;

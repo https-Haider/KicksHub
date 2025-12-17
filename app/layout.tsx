@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { CartProvider } from "@/lib/cart-context";
 import { AdminProvider } from "@/lib/admin-context";
 import { ProductsProvider } from "@/lib/products-context";
+import { Toaster } from "@/components/ui/sonner";
 import {
   OrganizationSchema,
   WebsiteSchema,
@@ -147,6 +148,7 @@ export default function RootLayout({
             <CartProvider>{children}</CartProvider>
           </ProductsProvider>
         </AdminProvider>
+        <Toaster position="top-right" richColors />
         <Analytics />
       </body>
     </html>

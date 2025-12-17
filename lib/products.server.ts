@@ -13,6 +13,7 @@ export type Product = {
   rating?: number;
   reviews?: number;
   inStock?: boolean;
+  stockQuantity?: number;
   sku?: string;
   sizes?: string[];
   condition?: string;
@@ -35,6 +36,7 @@ interface ProductDocument extends WithId<Document> {
   rating?: number;
   reviews?: number;
   inStock?: boolean;
+  stockQuantity?: number;
   sku?: string;
   sizes?: string[];
   condition?: string;
@@ -78,6 +80,7 @@ function mapDocumentToProduct(d: ProductDocument): Product {
     rating: d.rating,
     reviews: d.reviews,
     inStock: d.inStock,
+    stockQuantity: d.stockQuantity,
     sku: d.sku,
     sizes: d.sizes,
     condition: d.condition,
@@ -140,21 +143,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     }
   }
   if (!doc) return null;
-  return {
-    id: doc.id,
-    name: doc.name,
-    slug: doc.slug,
-    price: doc.price,
-    image: doc.image,
-    category: doc.category,
-    description: doc.description,
-    rating: doc.rating,
-    reviews: doc.reviews,
-    inStock: doc.inStock,
-    sku: doc.sku,
-    sizes: doc.sizes,
-    condition: doc.condition,
-  };
+  return mapDocumentToProduct(doc);
 }
 
 export async function addProduct(

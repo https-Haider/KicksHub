@@ -54,6 +54,7 @@ export default function CheckoutPage() {
             productName: item.product.name,
             price: item.product.price,
             quantity: item.quantity,
+            selectedSize: item.selectedSize,
           })),
           subtotal: total,
           shipping: shippingCost,

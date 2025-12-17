@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useAdmin } from "@/lib/admin-context";
 import type { Product } from "@/lib/products";
-import { X, Plus, GripVertical } from "lucide-react";
+import { X, Plus, GripVertical, Sparkles, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function AdminProductsPage() {
   const router = useRouter();
@@ -15,6 +17,9 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isGeneratingSeo, setIsGeneratingSeo] = useState(false);
+  const [seoKeywords, setSeoKeywords] = useState<string[]>([]);
+  const [newKeyword, setNewKeyword] = useState("");
   const [formData, setFormData] = useState<Omit<Product, "id">>({
     name: "",
     price: 0,
@@ -25,6 +30,7 @@ export default function AdminProductsPage() {
     rating: 4.5,
     reviews: 0,
     inStock: true,
+    stockQuantity: 10,
     sku: "",
     sizes: [],
     condition: "good",
@@ -59,6 +65,80 @@ export default function AdminProductsPage() {
   if (!isAuthenticated) {
     return null;
   }
+
+  // Generate SEO using AI
+  const generateSeo = async () => {
+    if (!formData.name.trim()) {
+      toast.error("Product name is required to generate SEO");
+      return;
+    }
+
+    setIsGeneratingSeo(true);
+
+    try {
+      const response = await fetch("/api/admin/ai/generate-seo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": "haider1011", // In production, use secure auth
+        },
+        body: JSON.stringify({
+          title: formData.name,
+          description: formData.description || undefined,
+          category: formData.category || undefined,
+          price: formData.price || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+
+        if (response.status === 429) {
+          toast.error("Rate limit exceeded. Max 10 requests per hour.");
+          return;
+        }
+        if (response.status === 403) {
+          toast.error("Unauthorized. Please log in again.");
+          return;
+        }
+
+        throw new Error(errorData.error || "Failed to generate SEO");
+      }
+
+      const data = await response.json();
+
+      // Update form with generated SEO data
+      setFormData((prev) => ({
+        ...prev,
+        seoTitle: data.metaTitle,
+        seoDescription: data.metaDescription,
+      }));
+      setSeoKeywords(data.keywords || []);
+
+      toast.success("SEO content generated successfully!");
+    } catch (error) {
+      console.error("SEO generation error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to generate SEO"
+      );
+    } finally {
+      setIsGeneratingSeo(false);
+    }
+  };
+
+  // Add a keyword to the list
+  const addKeyword = () => {
+    const trimmed = newKeyword.trim().toLowerCase();
+    if (trimmed && !seoKeywords.includes(trimmed)) {
+      setSeoKeywords((prev) => [...prev, trimmed]);
+      setNewKeyword("");
+    }
+  };
+
+  // Remove a keyword from the list
+  const removeKeyword = (keyword: string) => {
+    setSeoKeywords((prev) => prev.filter((k) => k !== keyword));
+  };
 
   // Helper function to upload image to Cloudinary
   const uploadImageToCloudinary = async (
@@ -129,12 +209,15 @@ export default function AdminProductsPage() {
       rating: 4.5,
       reviews: 0,
       inStock: true,
+      stockQuantity: 10,
       sku: "",
       sizes: [],
       condition: "good",
       seoTitle: "",
       seoDescription: "",
     });
+    setSeoKeywords([]); // Reset keywords for new product
+    setNewKeyword("");
     setShowModal(true);
   };
 
@@ -150,12 +233,25 @@ export default function AdminProductsPage() {
       rating: product.rating,
       reviews: product.reviews,
       inStock: product.inStock,
+      stockQuantity: product.stockQuantity ?? 0,
       sku: product.sku,
       sizes: product.sizes || [],
       condition: product.condition,
       seoTitle: (product as any).seoTitle || "",
       seoDescription: (product as any).seoDescription || "",
     });
+    // Load SEO keywords from the product (stored as comma-separated string)
+    const productKeywords = (product as any).seoKeywords;
+    if (productKeywords && typeof productKeywords === "string") {
+      setSeoKeywords(
+        productKeywords
+          .split(",")
+          .map((k: string) => k.trim().toLowerCase())
+          .filter((k: string) => k.length > 0)
+      );
+    } else {
+      setSeoKeywords([]);
+    }
     setShowModal(true);
   };
 
@@ -165,13 +261,19 @@ export default function AdminProductsPage() {
       return;
     }
 
+    // Include SEO keywords in the payload
+    const payload = {
+      ...formData,
+      seoKeywords: seoKeywords.length > 0 ? seoKeywords.join(", ") : undefined,
+    };
+
     (async () => {
       try {
         if (editingId !== null) {
           const res = await fetch(`/api/products/${editingId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData),
+            body: JSON.stringify(payload),
           });
           if (res.ok) {
             const updated = await res.json();
@@ -186,7 +288,7 @@ export default function AdminProductsPage() {
           const res = await fetch(`/api/products`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData),
+            body: JSON.stringify(payload),
           });
           if (res.ok) {
             const created = await res.json();
@@ -318,12 +420,14 @@ export default function AdminProductsPage() {
                     <td className="py-4 px-6">
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          product.inStock
+                          (product.stockQuantity ?? 0) > 5
                             ? "bg-green-100 text-green-800"
+                            : (product.stockQuantity ?? 0) > 0
+                            ? "bg-yellow-100 text-yellow-800"
                             : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {product.inStock ? "In Stock" : "Out of Stock"}
+                        {product.stockQuantity ?? 0} in stock
                       </span>
                     </td>
                     <td className="py-4 px-6 text-foreground">
@@ -404,11 +508,14 @@ export default function AdminProductsPage() {
                     </label>
                     <input
                       type="number"
-                      value={formData.price}
+                      value={formData.price || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          price: Number.parseFloat(e.target.value),
+                          price:
+                            e.target.value === ""
+                              ? 0
+                              : Number.parseFloat(e.target.value),
                         })
                       }
                       className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
@@ -469,22 +576,84 @@ export default function AdminProductsPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
-                      Rating
+                      Stock Quantity
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newQty = Math.max(
+                            0,
+                            (formData.stockQuantity ?? 0) - 1
+                          );
+                          setFormData({
+                            ...formData,
+                            stockQuantity: newQty,
+                            inStock: newQty > 0,
+                          });
+                        }}
+                        disabled={(formData.stockQuantity ?? 0) <= 0}
+                        className="w-10 h-10 flex items-center justify-center rounded-md border border-border bg-background hover:bg-muted text-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        value={formData.stockQuantity ?? 0}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            stockQuantity: parseInt(e.target.value) || 0,
+                            inStock: parseInt(e.target.value) > 0,
+                          })
+                        }
+                        min="0"
+                        className="w-20 px-3 py-2 border border-border rounded-md bg-background text-foreground text-center text-lg font-semibold"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newQty = (formData.stockQuantity ?? 0) + 1;
+                          setFormData({
+                            ...formData,
+                            stockQuantity: newQty,
+                            inStock: true,
+                          });
+                        }}
+                        className="w-10 h-10 flex items-center justify-center rounded-md border border-border bg-background hover:bg-muted text-lg font-bold transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Click + or − to adjust, or type directly
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Available Sizes
                     </label>
                     <input
-                      type="number"
-                      min="0"
-                      max="5"
-                      step="0.1"
-                      value={formData.rating}
+                      type="text"
+                      value={formData.sizes?.join(", ") || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          rating: Number.parseFloat(e.target.value),
+                          sizes: e.target.value
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter(Boolean),
                         })
                       }
+                      placeholder="e.g., 7, 8, 9, 10, 11, 12"
                       className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Enter sizes separated by commas
+                    </p>
                   </div>
                 </div>
 
@@ -504,40 +673,133 @@ export default function AdminProductsPage() {
                 </div>
 
                 {/* SEO fields */}
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Meta Title
-                  </label>
-                  <input
-                    type="text"
-                    value={(formData as any).seoTitle}
-                    onChange={(e) =>
-                      setFormData({ ...formData, seoTitle: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
-                    placeholder="SEO meta title (optional)"
-                  />
-                </div>
+                <div className="space-y-4 border border-border rounded-lg p-4 bg-muted/20">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      SEO Settings
+                    </h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={generateSeo}
+                      disabled={isGeneratingSeo || !formData.name.trim()}
+                      className="gap-2"
+                    >
+                      {isGeneratingSeo ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4" />
+                          Generate SEO
+                        </>
+                      )}
+                    </Button>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Meta Description
-                  </label>
-                  <textarea
-                    value={(formData as any).seoDescription}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        seoDescription: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
-                    rows={2}
-                    placeholder="SEO meta description (optional)"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Meta Title
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({((formData as any).seoTitle || "").length}/60 chars)
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      value={(formData as any).seoTitle}
+                      onChange={(e) =>
+                        setFormData({ ...formData, seoTitle: e.target.value })
+                      }
+                      maxLength={60}
+                      className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                      placeholder="SEO meta title (optional)"
+                    />
+                  </div>
 
-                {/* Removed Meta Keywords - keywords are mostly ignored by search engines. Keeping only title + description for SEO. */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Meta Description
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({((formData as any).seoDescription || "").length}/160
+                        chars)
+                      </span>
+                    </label>
+                    <textarea
+                      value={(formData as any).seoDescription}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          seoDescription: e.target.value,
+                        })
+                      }
+                      maxLength={160}
+                      className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                      rows={2}
+                      placeholder="SEO meta description (optional)"
+                    />
+                  </div>
+
+                  {/* SEO Keywords */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      SEO Keywords
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({seoKeywords.length} keywords)
+                      </span>
+                    </label>
+
+                    {/* Keywords chips */}
+                    {seoKeywords.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {seoKeywords.map((keyword) => (
+                          <Badge
+                            key={keyword}
+                            variant="secondary"
+                            className="gap-1 pr-1"
+                          >
+                            {keyword}
+                            <button
+                              type="button"
+                              onClick={() => removeKeyword(keyword)}
+                              className="ml-1 hover:bg-destructive hover:text-destructive-foreground rounded-full p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Add keyword input */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newKeyword}
+                        onChange={(e) => setNewKeyword(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addKeyword();
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm"
+                        placeholder="Add a keyword..."
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addKeyword}
+                        disabled={!newKeyword.trim()}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Multiple Images Section */}
                 <div>

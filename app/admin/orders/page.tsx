@@ -386,14 +386,21 @@ export default function AdminOrdersPage() {
             />
             <div className="bg-background border border-border rounded-lg p-6 z-10 max-w-3xl w-full mx-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Order {selectedOrder.id}</h2>
-                <Button size="sm" variant="outline" onClick={() => setSelectedOrder(null)}>
+                <h2 className="text-xl font-semibold">
+                  Order {selectedOrder.id}
+                </h2>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSelectedOrder(null)}
+                >
                   Close
                 </Button>
               </div>
               <div className="space-y-3">
                 <div>
-                  <strong>Customer:</strong> {selectedOrder.customerName} • {selectedOrder.email}
+                  <strong>Customer:</strong> {selectedOrder.customerName} •{" "}
+                  {selectedOrder.email}
                 </div>
                 <div>
                   <strong>Total:</strong> PKR {Math.round(selectedOrder.total)}
@@ -401,17 +408,37 @@ export default function AdminOrdersPage() {
                 <div>
                   <h3 className="font-medium mt-3 mb-2">Items</h3>
                   <div className="space-y-2">
-                    {selectedOrder.items.map((it) => (
-                      <div key={`${it.productId}-${it.productName}`} className="border p-3 rounded">
-                        <div className="text-sm"><strong>{it.productName}</strong></div>
-                        <div className="text-xs text-muted-foreground">ID: {it.productId} • Qty: {it.quantity} • PKR {Math.round(it.price)}</div>
+                    {selectedOrder.items.map((it, idx) => (
+                      <div
+                        key={`${it.productId}-${it.productName}-${idx}`}
+                        className="border p-3 rounded"
+                      >
+                        <div className="text-sm">
+                          <strong>{it.productName}</strong>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          ID: {it.productId} • Qty: {it.quantity} • PKR{" "}
+                          {Math.round(it.price)}
+                          {it.selectedSize && (
+                            <>
+                              {" "}
+                              •{" "}
+                              <span className="font-medium text-foreground">
+                                Size: EU {it.selectedSize}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div className="mt-4">
                   <strong>Address:</strong>
-                  <div className="text-sm text-muted-foreground">{selectedOrder.address}, {selectedOrder.city} {selectedOrder.zipCode}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {selectedOrder.address}, {selectedOrder.city}{" "}
+                    {selectedOrder.zipCode}
+                  </div>
                 </div>
               </div>
             </div>
