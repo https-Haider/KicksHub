@@ -4,8 +4,11 @@ import dynamic from "next/dynamic";
 
 // Lazy load the heavy reviews component
 const LandingReviews = dynamic(
-  () => import("@/components/reviews/landing-reviews").then((mod) => mod.LandingReviews),
-  { 
+  () =>
+    import("@/components/reviews/landing-reviews").then(
+      (mod) => mod.LandingReviews
+    ),
+  {
     ssr: false,
     loading: () => (
       <section className="py-16 md:py-24 bg-muted/30">
@@ -16,7 +19,7 @@ const LandingReviews = dynamic(
           </div>
         </div>
       </section>
-    )
+    ),
   }
 );
 

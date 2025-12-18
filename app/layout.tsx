@@ -112,9 +112,17 @@ export default function RootLayout({
         <link rel="icon" href="/placeholder-logo.png" sizes="any" />
         <meta name="theme-color" content="#000000" />
         {/* Preconnect to external domains first for faster connections */}
-        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://res.cloudinary.com"
+          crossOrigin="anonymous"
+        />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
         {/* Preload critical LCP image */}
         <link
           rel="preload"
@@ -157,7 +165,9 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+      >
         <OrganizationSchema />
         <WebsiteSchema />
         <LocalBusinessSchema />

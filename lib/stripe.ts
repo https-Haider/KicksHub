@@ -1,8 +1,19 @@
 import Stripe from "stripe";
 
-// Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-04-30.basil",
-});
+// Lazy initialize Stripe to avoid build-time errors when env var is not set
+let stripeInstance: Stripe | null = null;
 
-export default stripe;
+export function getStripe(): Stripe {
+  if (!stripeInstance) {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      throw new Error("STRIPE_SECRET_KEY environment variable is not set");
+    }
+    stripeInstance = new Stripe(secretKey, {
+      apiVersion: "2025-04-30.basil",
+    });
+  }
+  return stripeInstance;
+}
+
+export default getStripe;
