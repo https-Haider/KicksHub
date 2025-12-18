@@ -8,11 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useCart } from "@/lib/cart-context";
 import { CartButton } from "@/components/cart-button";
+import { getStripe } from "@/lib/stripe-client";
+import { CreditCard, Truck } from "lucide-react";
+
+// Format PKR amount with commas for better readability (no limit on amount)
+function formatPKR(amount: number): string {
+  return Math.round(amount).toLocaleString("en-PK");
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, total, clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "stripe">("cod");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -35,14 +43,12 @@ export default function CheckoutPage() {
     e.preventDefault();
     setIsProcessing(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
     // PKR shipping: free over PKR 5000, otherwise PKR 200. No tax applied.
     const shippingCost = total > 5000 ? 0 : 200;
     const taxCost = 0;
     const finalTotal = Math.round(total + shippingCost + taxCost);
 
-    // create order on the server so we can run OTP/email flows
+    // Create order on the server first
     let order = null as any;
     try {
       const res = await fetch("/api/orders", {
@@ -66,6 +72,9 @@ export default function CheckoutPage() {
           city: formData.city,
           state: formData.state,
           zipCode: formData.zipCode,
+          paymentMethod: paymentMethod,
+          paymentStatus:
+            paymentMethod === "cod" ? "pending" : "awaiting_payment",
         }),
       });
 
@@ -80,8 +89,59 @@ export default function CheckoutPage() {
       return;
     }
 
-    clearCart();
-    router.push(`/order-confirmation/${order.id}`);
+    // Handle payment based on method
+    if (paymentMethod === "stripe") {
+      try {
+        const stripeRes = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: items.map((item) => ({
+              productId: item.product.id,
+              productName: item.product.name,
+              price: item.product.price,
+              quantity: item.quantity,
+              selectedSize: item.selectedSize,
+            })),
+            customerInfo: {
+              email: formData.email,
+              customerName: `${formData.firstName} ${formData.lastName}`,
+              phone: formData.phone,
+              address: formData.address,
+              city: formData.city,
+              state: formData.state,
+              zipCode: formData.zipCode,
+            },
+            orderId: order.id,
+          }),
+        });
+
+        if (!stripeRes.ok) {
+          const errorData = await stripeRes.json().catch(() => ({}));
+          throw new Error(
+            errorData.error || "Failed to create payment session"
+          );
+        }
+
+        const { url } = await stripeRes.json();
+
+        // Clear cart before redirecting to Stripe
+        clearCart();
+
+        // Redirect to Stripe checkout
+        if (url) {
+          window.location.href = url;
+        }
+      } catch (err) {
+        console.error("Stripe checkout error:", err);
+        setIsProcessing(false);
+        return;
+      }
+    } else {
+      // Cash on Delivery - go to order confirmation
+      clearCart();
+      router.push(`/order-confirmation/${order.id}`);
+    }
   };
 
   if (items.length === 0) {
@@ -298,13 +358,84 @@ export default function CheckoutPage() {
                 </div>
               </Card>
 
+              {/* Payment Method Selection */}
+              <Card className="p-6">
+                <h2 className="text-xl font-bold text-foreground mb-6">
+                  Payment Method
+                </h2>
+                <div className="space-y-3">
+                  <label
+                    className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${
+                      paymentMethod === "cod"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cod"
+                      checked={paymentMethod === "cod"}
+                      onChange={() => setPaymentMethod("cod")}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <Truck className="w-6 h-6 text-muted-foreground" />
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">
+                        Cash on Delivery
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Pay when you receive your order
+                      </p>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${
+                      paymentMethod === "stripe"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="stripe"
+                      checked={paymentMethod === "stripe"}
+                      onChange={() => setPaymentMethod("stripe")}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <CreditCard className="w-6 h-6 text-muted-foreground" />
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">
+                        Credit/Debit Card
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Secure payment via Stripe
+                      </p>
+                    </div>
+                    <div className="flex gap-1">
+                      <img
+                        src="https://cdn.jsdelivr.net/gh/lipis/flag-icons/flags/4x3/us.svg"
+                        alt="Visa"
+                        className="h-5 w-auto opacity-60"
+                      />
+                    </div>
+                  </label>
+                </div>
+              </Card>
+
               <Button
                 type="submit"
                 size="lg"
                 className="w-full"
                 disabled={isProcessing}
               >
-                {isProcessing ? "Processing..." : "Complete Purchase"}
+                {isProcessing
+                  ? "Processing..."
+                  : paymentMethod === "stripe"
+                  ? "Pay with Card"
+                  : "Place Order (COD)"}
               </Button>
             </form>
           </div>
@@ -340,7 +471,7 @@ export default function CheckoutPage() {
               <div className="space-y-3 mb-6 pb-6 border-b border-border">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
-                  <span>PKR {Math.round(total)}</span>
+                  <span>PKR {formatPKR(total)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>Shipping</span>
@@ -353,7 +484,7 @@ export default function CheckoutPage() {
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-foreground">Total</span>
                 <span className="text-2xl font-bold text-primary">
-                  PKR {finalTotal}
+                  PKR {formatPKR(finalTotal)}
                 </span>
               </div>
 

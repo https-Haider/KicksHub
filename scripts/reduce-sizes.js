@@ -1,7 +1,12 @@
+require("dotenv").config({ path: ".env.local" });
 const { MongoClient } = require("mongodb");
 
-const uri =
-  "mongodb+srv://haider:haider1011@cluster0.ts7eadi.mongodb.net/?appName=Cluster0";
+const uri = process.env.MONGODB_URI;
+
+if (!uri) {
+  console.error("Error: MONGODB_URI environment variable is required");
+  process.exit(1);
+}
 
 // Generate random 2-3 sizes from 38 to 46
 function generateRandomSizes() {

@@ -224,3 +224,83 @@ export function LocalBusinessSchema({
     />
   );
 }
+
+// ItemList schema for product collection pages
+interface ItemListSchemaProps {
+  items: {
+    name: string;
+    url: string;
+    image?: string;
+    price?: number;
+  }[];
+  name?: string;
+  description?: string;
+}
+
+export function ItemListSchema({
+  items,
+  name = "All Sneakers",
+  description = "Browse our collection of vintage and thrifted sneakers",
+}: ItemListSchemaProps) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    description,
+    numberOfItems: items.length,
+    itemListElement: items.slice(0, 50).map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Product",
+        name: item.name,
+        url: item.url,
+        image: item.image,
+        offers: item.price
+          ? {
+              "@type": "Offer",
+              price: item.price,
+              priceCurrency: "PKR",
+            }
+          : undefined,
+      },
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+// FAQ Schema for FAQ sections
+interface FAQSchemaProps {
+  questions: {
+    question: string;
+    answer: string;
+  }[];
+}
+
+export function FAQSchema({ questions }: FAQSchemaProps) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: questions.map((q) => ({
+      "@type": "Question",
+      name: q.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: q.answer,
+      },
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}

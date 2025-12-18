@@ -8,7 +8,20 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAdmin } from "@/lib/admin-context";
 import type { Product } from "@/lib/products";
-import { X, Plus, GripVertical, Sparkles, Loader2 } from "lucide-react";
+import {
+  X,
+  Plus,
+  GripVertical,
+  Sparkles,
+  Loader2,
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Heading2,
+  Link as LinkIcon,
+  Quote,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminProductsPage() {
@@ -84,9 +97,8 @@ export default function AdminProductsPage() {
         },
         body: JSON.stringify({
           title: formData.name,
-          description: formData.description || undefined,
+          shortDescription: formData.description || undefined,
           category: formData.category || undefined,
-          price: formData.price || undefined,
         }),
       });
 
@@ -661,14 +673,198 @@ export default function AdminProductsPage() {
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Description
                   </label>
+                  {/* Rich Text Editor Toolbar */}
+                  <div className="flex flex-wrap gap-1 p-2 border border-border border-b-0 rounded-t-md bg-muted/50">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const textarea = document.getElementById(
+                          "product-description"
+                        ) as HTMLTextAreaElement;
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const end = textarea.selectionEnd;
+                          const text = formData.description;
+                          const selectedText = text.substring(start, end);
+                          const newText =
+                            text.substring(0, start) +
+                            `**${selectedText}**` +
+                            text.substring(end);
+                          setFormData({ ...formData, description: newText });
+                        }
+                      }}
+                      className="p-2 hover:bg-muted rounded-md transition-colors"
+                      title="Bold"
+                    >
+                      <Bold className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const textarea = document.getElementById(
+                          "product-description"
+                        ) as HTMLTextAreaElement;
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const end = textarea.selectionEnd;
+                          const text = formData.description;
+                          const selectedText = text.substring(start, end);
+                          const newText =
+                            text.substring(0, start) +
+                            `*${selectedText}*` +
+                            text.substring(end);
+                          setFormData({ ...formData, description: newText });
+                        }
+                      }}
+                      className="p-2 hover:bg-muted rounded-md transition-colors"
+                      title="Italic"
+                    >
+                      <Italic className="w-4 h-4" />
+                    </button>
+                    <div className="w-px bg-border mx-1" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const textarea = document.getElementById(
+                          "product-description"
+                        ) as HTMLTextAreaElement;
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const text = formData.description;
+                          const beforeCursor = text.substring(0, start);
+                          const afterCursor = text.substring(start);
+                          const newText =
+                            beforeCursor +
+                            (beforeCursor.endsWith("\n") || beforeCursor === ""
+                              ? ""
+                              : "\n") +
+                            "## " +
+                            afterCursor;
+                          setFormData({ ...formData, description: newText });
+                        }
+                      }}
+                      className="p-2 hover:bg-muted rounded-md transition-colors"
+                      title="Heading"
+                    >
+                      <Heading2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const textarea = document.getElementById(
+                          "product-description"
+                        ) as HTMLTextAreaElement;
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const end = textarea.selectionEnd;
+                          const text = formData.description;
+                          const selectedText = text.substring(start, end);
+                          const lines = selectedText.split("\n");
+                          const bulletedLines = lines
+                            .map((line) => (line.trim() ? `- ${line}` : line))
+                            .join("\n");
+                          const newText =
+                            text.substring(0, start) +
+                            bulletedLines +
+                            text.substring(end);
+                          setFormData({ ...formData, description: newText });
+                        }
+                      }}
+                      className="p-2 hover:bg-muted rounded-md transition-colors"
+                      title="Bullet List"
+                    >
+                      <List className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const textarea = document.getElementById(
+                          "product-description"
+                        ) as HTMLTextAreaElement;
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const end = textarea.selectionEnd;
+                          const text = formData.description;
+                          const selectedText = text.substring(start, end);
+                          const lines = selectedText.split("\n");
+                          const numberedLines = lines
+                            .map((line, i) =>
+                              line.trim() ? `${i + 1}. ${line}` : line
+                            )
+                            .join("\n");
+                          const newText =
+                            text.substring(0, start) +
+                            numberedLines +
+                            text.substring(end);
+                          setFormData({ ...formData, description: newText });
+                        }
+                      }}
+                      className="p-2 hover:bg-muted rounded-md transition-colors"
+                      title="Numbered List"
+                    >
+                      <ListOrdered className="w-4 h-4" />
+                    </button>
+                    <div className="w-px bg-border mx-1" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const textarea = document.getElementById(
+                          "product-description"
+                        ) as HTMLTextAreaElement;
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const end = textarea.selectionEnd;
+                          const text = formData.description;
+                          const selectedText = text.substring(start, end);
+                          const newText =
+                            text.substring(0, start) +
+                            `[${selectedText || "link text"}](url)` +
+                            text.substring(end);
+                          setFormData({ ...formData, description: newText });
+                        }
+                      }}
+                      className="p-2 hover:bg-muted rounded-md transition-colors"
+                      title="Insert Link"
+                    >
+                      <LinkIcon className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const textarea = document.getElementById(
+                          "product-description"
+                        ) as HTMLTextAreaElement;
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const end = textarea.selectionEnd;
+                          const text = formData.description;
+                          const selectedText = text.substring(start, end);
+                          const lines = selectedText.split("\n");
+                          const quotedLines = lines
+                            .map((line) => `> ${line}`)
+                            .join("\n");
+                          const newText =
+                            text.substring(0, start) +
+                            quotedLines +
+                            text.substring(end);
+                          setFormData({ ...formData, description: newText });
+                        }
+                      }}
+                      className="p-2 hover:bg-muted rounded-md transition-colors"
+                      title="Quote"
+                    >
+                      <Quote className="w-4 h-4" />
+                    </button>
+                  </div>
                   <textarea
+                    id="product-description"
                     value={formData.description}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
-                    rows={3}
-                    placeholder="Product description..."
+                    className="w-full px-3 py-2 border border-border rounded-b-md bg-background text-foreground font-mono text-sm"
+                    rows={5}
+                    placeholder="Product description... (Supports Markdown: **bold**, *italic*, - bullets, 1. numbered, ## heading)"
                   />
                 </div>
 

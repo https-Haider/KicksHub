@@ -28,66 +28,27 @@ export type GenerateSeoResponse = z.infer<typeof GenerateSeoResponseSchema>;
 
 // Build the AI prompt for SEO generation
 export function buildSeoPrompt(input: GenerateSeoRequest): string {
-  const toneDescriptions: Record<string, string> = {
-    neutral: "professional and balanced",
-    premium: "luxurious and exclusive",
-    friendly: "warm and approachable",
-    technical: "detailed and informative",
-  };
-
-  const toneDesc = toneDescriptions[input.tone || "neutral"];
-
-  let context = `Product Title: ${input.title}`;
+  let context = `Product: ${input.title}`;
 
   if (input.category) {
-    context += `\nCategory: ${input.category}`;
+    context += ` | Category: ${input.category}`;
   }
 
   if (input.brand) {
-    context += `\nBrand: ${input.brand}`;
+    context += ` | Brand: ${input.brand}`;
   }
 
   if (input.shortDescription) {
-    context += `\nDescription: ${input.shortDescription}`;
+    context += ` | ${input.shortDescription}`;
   }
 
-  if (input.keyFeatures && input.keyFeatures.length > 0) {
-    context += `\nKey Features:\n${input.keyFeatures
-      .map((f) => `- ${f}`)
-      .join("\n")}`;
-  }
+  const prompt = `Generate SEO for this shoe product: ${context}
 
-  if (input.targetAudience) {
-    context += `\nTarget Audience: ${input.targetAudience}`;
-  }
-
-  const prompt = `You are an SEO expert for an e-commerce sneaker/shoe store in Pakistan. Generate SEO metadata for the following product.
-
-${context}
-
-Requirements:
-1. Tone: ${toneDesc}
-2. Locale: ${input.locale || "en-PK"}
-
-Rules:
-- metaTitle: Maximum 60 characters. Include the product name. Make it compelling for search results.
-- metaDescription: Between 140-160 characters. Write naturally, not as a keyword list. Include a call to action.
-- keywords: Generate 8-20 relevant keyword phrases (2-6 words each). Include:
-  * Product type terms (e.g., "sneakers", "running shoes")
-  * Category terms if provided
-  * Brand name if provided
-  * Audience-relevant terms if provided
-  * Purchase intent terms like "buy online", "price in Pakistan" where appropriate
-  * Do NOT use spammy terms like "best", "top", "#1", "official"
-  * Do NOT fabricate claims (no "warranty", "authentic" unless explicitly stated)
-  * No duplicate keywords
-  * Focus on terms Pakistani customers would search for
-
-Return ONLY a valid JSON object with this exact structure (no markdown, no explanation):
+Output JSON only:
 {
-  "metaTitle": "string",
-  "metaDescription": "string", 
-  "keywords": ["keyword1", "keyword2", ...]
+  "metaTitle": "max 60 chars, include product name",
+  "metaDescription": "140-160 chars, natural text with call to action",
+  "keywords": ["8-12 keyword phrases", "2-4 words each", "include buy online pakistan"]
 }`;
 
   return prompt;
@@ -189,71 +150,124 @@ export function enforceConstraints(
 export async function generateSeoWithAI(
   input: GenerateSeoRequest
 ): Promise<GenerateSeoResponse> {
-  const apiKey =
-    process.env.AI_API_KEY ||
-    "sk-do-zdO1pbrm4AM8HaJMkL--9KomKShDFx8Gg4xzrXSFfOYzKHLrAi2U4VQQkJ";
-  const baseUrl = "https://inference.do-ai.run/v1";
+  const apiKey = process.env.AI_API_KEY;
+  const baseUrl = process.env.AI_API_URL || "https://inference.do-ai.run/v1";
 
   if (!apiKey) {
-    throw new Error("AI_API_KEY is not configured");
+    throw new Error("AI_API_KEY environment variable is not configured");
   }
 
   const prompt = buildSeoPrompt(input);
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "openai-gpt-oss-120b",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an SEO expert. Return only valid JSON, no markdown formatting.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      max_tokens: 1000,
-    }),
-  });
+  // Create AbortController for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("AI API error:", response.status, errorText);
+  try {
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "openai-gpt-oss-120b",
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        max_tokens: 4000,
+        temperature: 0.3,
+      }),
+      signal: controller.signal,
+    });
 
-    // Parse error message for better user feedback
-    let errorMessage = `AI API error: ${response.status}`;
-    try {
-      const errorJson = JSON.parse(errorText);
-      if (errorJson.error?.message) {
-        errorMessage = errorJson.error.message;
-      } else if (errorJson.message) {
-        errorMessage = errorJson.message;
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("AI API error:", response.status, errorText);
+
+      // Parse error message for better user feedback
+      let errorMessage = `AI API error: ${response.status}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.error?.message) {
+          errorMessage = errorJson.error.message;
+        } else if (errorJson.message) {
+          errorMessage = errorJson.message;
+        }
+      } catch {
+        // Use default error message
       }
-    } catch {
-      // Use default error message
+
+      throw new Error(errorMessage);
     }
 
-    throw new Error(errorMessage);
+    const result = await response.json();
+    console.log("AI API finish_reason:", result.choices?.[0]?.finish_reason);
+
+    // Handle different response structures - some models use reasoning_content instead of content
+    const message = result.choices?.[0]?.message;
+    let aiContent = message?.content;
+
+    // If content is null/empty but reasoning_content exists, try to extract JSON from it
+    if (!aiContent && message?.reasoning_content) {
+      console.log("Content is null, checking reasoning_content...");
+      const reasoning = message.reasoning_content as string;
+
+      // Look for JSON objects in the reasoning content
+      // Try to find a complete JSON object with our expected fields
+      const jsonMatches = reasoning.match(
+        /\{[^{}]*"metaTitle"[^{}]*"metaDescription"[^{}]*"keywords"[^{}]*\[.*?\][^{}]*\}/g
+      );
+
+      if (jsonMatches && jsonMatches.length > 0) {
+        // Use the last match (usually the final output)
+        aiContent = jsonMatches[jsonMatches.length - 1];
+        console.log("Extracted JSON from reasoning:", aiContent);
+      } else {
+        // Try to build JSON from the reasoning content manually
+        const titleMatch = reasoning.match(/"metaTitle":\s*"([^"]+)"/);
+        const descMatch = reasoning.match(/"metaDescription":\s*"([^"]+)"/);
+        const keywordsMatch = reasoning.match(/"keywords":\s*\[([\s\S]*?)\]/);
+
+        if (titleMatch && descMatch && keywordsMatch) {
+          aiContent = `{"metaTitle":"${titleMatch[1]}","metaDescription":"${descMatch[1]}","keywords":[${keywordsMatch[1]}]}`;
+          console.log("Built JSON from reasoning parts:", aiContent);
+        }
+      }
+    }
+
+    if (!aiContent) {
+      console.error("AI response structure:", JSON.stringify(result, null, 2));
+      throw new Error("No content in AI response");
+    }
+
+    const parsed = parseAIResponse(aiContent);
+    if (!parsed) {
+      throw new Error("Failed to parse AI response");
+    }
+
+    return enforceConstraints(parsed);
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+
+    if (error.name === "AbortError") {
+      throw new Error("AI API request timed out. Please try again.");
+    }
+
+    if (
+      error.cause?.code === "ENOTFOUND" ||
+      error.cause?.code === "ECONNREFUSED"
+    ) {
+      throw new Error(
+        "Could not connect to AI service. Check your internet connection."
+      );
+    }
+
+    throw error;
   }
-
-  const result = await response.json();
-  const aiContent = result.choices?.[0]?.message?.content;
-
-  if (!aiContent) {
-    throw new Error("No content in AI response");
-  }
-
-  const parsed = parseAIResponse(aiContent);
-  if (!parsed) {
-    throw new Error("Failed to parse AI response");
-  }
-
-  return enforceConstraints(parsed);
 }
