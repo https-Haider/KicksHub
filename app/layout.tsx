@@ -1,20 +1,29 @@
 import type React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import { CartProvider } from "@/lib/cart-context";
 import { AdminProvider } from "@/lib/admin-context";
 import { ProductsProvider } from "@/lib/products-context";
-import { Toaster } from "@/components/ui/sonner";
 import {
   OrganizationSchema,
   WebsiteSchema,
   LocalBusinessSchema,
 } from "@/components/seo/json-ld";
+import { Toaster } from "@/components/ui/sonner";
+import { AnalyticsWrapper } from "@/components/analytics-wrapper";
 import "./globals.css";
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+// Load fonts with display swap for better LCP
+const geistSans = Geist({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-geist-sans",
+});
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-geist-mono",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL || "https://www.kickshub.site"),
@@ -100,19 +109,20 @@ export default function RootLayout({
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/placeholder-logo.png" />
+        <link rel="icon" href="/placeholder-logo.png" sizes="any" />
         <meta name="theme-color" content="#000000" />
-        {/* Preload critical images for LCP optimization */}
+        {/* Preconnect to external domains first for faster connections */}
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Preload critical LCP image */}
         <link
           rel="preload"
           href="/shoes/hero-shoes.jpg"
           as="image"
           type="image/jpeg"
+          fetchPriority="high"
         />
-        <link rel="preload" href="/placeholder-logo.png" as="image" />
-        {/* Preconnect to external domains */}
-        <link rel="preconnect" href="https://res.cloudinary.com" />
-        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         {/* Default Open Graph / Twitter image to avoid missing image errors */}
         <meta property="og:image" content="/placeholder-logo.png" />
         <meta name="twitter:image" content="/placeholder-logo.png" />
@@ -123,23 +133,31 @@ export default function RootLayout({
             content={process.env.NEXT_PUBLIC_GSC_VERIFICATION}
           />
         )}
-        {/* Google Analytics (GA4) - gtag.js */}
+        {/* Google Analytics (GA4) - defer loading for better performance */}
         {process.env.NEXT_PUBLIC_GA_ID && (
-          <>
-            <script
-              async
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-            />
-            <script
-              // eslint-disable-next-line react/no-danger
-              dangerouslySetInnerHTML={{
-                __html: `window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', { send_page_view: true });`,
-              }}
-            />
-          </>
+          <script
+            // eslint-disable-next-line react/no-danger
+            dangerouslySetInnerHTML={{
+              __html: `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', { send_page_view: true });
+                // Load gtag.js after page load
+                if (typeof window !== 'undefined') {
+                  window.addEventListener('load', function() {
+                    var s = document.createElement('script');
+                    s.src = 'https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}';
+                    s.async = true;
+                    document.head.appendChild(s);
+                  });
+                }
+              `,
+            }}
+          />
         )}
       </head>
-      <body className={`font-sans antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <OrganizationSchema />
         <WebsiteSchema />
         <LocalBusinessSchema />
@@ -149,7 +167,7 @@ export default function RootLayout({
           </ProductsProvider>
         </AdminProvider>
         <Toaster position="top-right" richColors />
-        <Analytics />
+        <AnalyticsWrapper />
       </body>
     </html>
   );

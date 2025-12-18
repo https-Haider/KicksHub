@@ -1,30 +1,30 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import {
   GenerateSeoRequestSchema,
   generateSeoWithAI,
   type GenerateSeoResponse,
 } from "@/lib/ai/seo";
-import { checkMongoRateLimit } from "@/lib/rate-limit";
 
-// Rate limit: 10 requests per hour per admin
-const RATE_LIMIT = 10;
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+// Rate limit configuration (for future use)
+// const RATE_LIMIT = 50;
+// const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 export async function POST(req: Request) {
   try {
     // 1. Admin authentication check
     const authHeader = req.headers.get("x-admin-password");
     const adminPassword = process.env.ADMIN_PASSWORD;
-    
+
     if (!adminPassword) {
-      console.error("[AI-SEO] ADMIN_PASSWORD environment variable is not configured");
+      console.error(
+        "[AI-SEO] ADMIN_PASSWORD environment variable is not configured"
+      );
       return NextResponse.json(
         { error: "Server configuration error. Contact administrator." },
         { status: 500 }
       );
     }
-    
+
     if (!authHeader || authHeader !== adminPassword) {
       console.log(
         `[AI-SEO] Unauthorized access attempt at ${new Date().toISOString()}`
@@ -38,32 +38,32 @@ export async function POST(req: Request) {
     // Use a simple admin identifier for rate limiting
     const adminUserId = "admin";
 
-    // 2. Rate limit check
-    const rateLimitResult = await checkMongoRateLimit({
-      userId: adminUserId,
-      endpoint: "generate-seo",
-      limit: RATE_LIMIT,
-      windowMs: RATE_LIMIT_WINDOW_MS,
-    });
+    // 2. Rate limit check (disabled during development - uncomment for production)
+    // const rateLimitResult = await checkMongoRateLimit({
+    //   userId: adminUserId,
+    //   endpoint: "generate-seo",
+    //   limit: RATE_LIMIT,
+    //   windowMs: RATE_LIMIT_WINDOW_MS,
+    // });
 
-    if (!rateLimitResult.allowed) {
-      console.log(
-        `[AI-SEO] Rate limit exceeded for admin at ${new Date().toISOString()}`
-      );
-      return NextResponse.json(
-        {
-          error: "Rate limit exceeded. Maximum 10 requests per hour.",
-          resetAt: rateLimitResult.resetAt.toISOString(),
-        },
-        {
-          status: 429,
-          headers: {
-            "X-RateLimit-Remaining": "0",
-            "X-RateLimit-Reset": rateLimitResult.resetAt.toISOString(),
-          },
-        }
-      );
-    }
+    // if (!rateLimitResult.allowed) {
+    //   console.log(
+    //     `[AI-SEO] Rate limit exceeded for admin at ${new Date().toISOString()}`
+    //   );
+    //   return NextResponse.json(
+    //     {
+    //       error: "Rate limit exceeded. Maximum 50 requests per hour.",
+    //       resetAt: rateLimitResult.resetAt.toISOString(),
+    //     },
+    //     {
+    //       status: 429,
+    //       headers: {
+    //         "X-RateLimit-Remaining": "0",
+    //         "X-RateLimit-Reset": rateLimitResult.resetAt.toISOString(),
+    //       },
+    //     }
+    //   );
+    // }
 
     // 3. Parse and validate request body
     let body: unknown;
@@ -133,11 +133,7 @@ export async function POST(req: Request) {
     );
 
     // 7. Return response
-    return NextResponse.json(seoData, {
-      headers: {
-        "X-RateLimit-Remaining": String(rateLimitResult.remaining),
-      },
-    });
+    return NextResponse.json(seoData);
   } catch (error) {
     console.error(
       `[AI-SEO] Unexpected error at ${new Date().toISOString()}:`,

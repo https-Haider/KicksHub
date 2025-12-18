@@ -3,10 +3,10 @@ import { getProductById, getProductBySlug } from "@/lib/products.server";
 import ProductDetailClient from "@/components/product-detail-client";
 import { ProductSchema, BreadcrumbSchema } from "@/components/seo/json-ld";
 
-type Props = { params: { id: string } };
+type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = (await params) as { id?: string };
+  const { id } = await params;
   if (!id) return {};
   // accept either numeric id or slug here
   const maybeNum = Number(id);
@@ -34,17 +34,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         .filter(Boolean)
     : undefined;
 
+  const baseUrl = process.env.SITE_URL ?? "https://www.kickshub.site";
+  const productSlug = (product as any).slug || id;
+  const canonicalUrl = `${baseUrl}/products/${encodeURIComponent(productSlug)}`;
+
   return {
     title,
     description,
     keywords,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title,
       description,
       images: product.image ? [product.image] : undefined,
-      url: `${
-        process.env.SITE_URL ?? "http://localhost:3000"
-      }/products/${encodeURIComponent(String(product.id ?? product.name))}`,
+      url: canonicalUrl,
       type: "website",
     },
     twitter: {
@@ -57,7 +62,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductDetailPage({ params }: Props) {
-  const { id } = (await params) as { id?: string };
+  const { id } = await params;
   // accept either numeric id or slug in this param
   const maybeNum = Number(id);
   const product =

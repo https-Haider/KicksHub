@@ -31,6 +31,11 @@ export interface Order {
   status: "confirmed" | "shipped" | "delivered" | "otp_sent";
   createdAt: string;
 
+  // Payment fields
+  paymentMethod?: "cod" | "stripe";
+  paymentStatus?: "pending" | "awaiting_payment" | "paid" | "failed";
+  stripeSessionId?: string | null;
+
   // OTP internals (demo only)
   otpHash?: string | null;
   otpExpiresAt?: number | null; // epoch ms

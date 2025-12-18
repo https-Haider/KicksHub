@@ -1,12 +1,18 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { getProductSlug } from "@/lib/products";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CartButton } from "@/components/cart-button";
+
+// Lazy load CartButton since it's not critical for initial render
+const CartButton = dynamic(
+  () => import("@/components/cart-button").then((mod) => mod.CartButton),
+  { ssr: false, loading: () => <div className="w-24 h-9" /> }
+);
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -200,7 +206,7 @@ export default function ProductsPage() {
               </div>
             )}
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredAndSortedProducts.map((product) => (
+              {filteredAndSortedProducts.map((product, index) => (
                 <Link
                   key={product.id}
                   href={`/products/${getProductSlug(product)}`}
@@ -212,6 +218,7 @@ export default function ProductsPage() {
                         alt={product.name}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        loading={index < 6 ? "eager" : "lazy"}
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>

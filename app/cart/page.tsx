@@ -8,6 +8,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { CartButton } from "@/components/cart-button";
 import { getProductSlug } from "@/lib/products";
 
+// Format PKR amount with commas for better readability (no limit on amount)
+function formatPKR(amount: number): string {
+  return Math.round(amount).toLocaleString("en-PK");
+}
+
 export default function CartPage() {
   const { items, removeItem, updateQuantity, total, clearCart, isLoading } =
     useCart();
@@ -124,7 +129,7 @@ export default function CartPage() {
                         )}
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-bold text-primary">
-                            PKR {Math.round(item.product.price)}
+                            PKR {formatPKR(item.product.price)}
                           </span>
                           <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2 border border-border rounded-md">
@@ -171,7 +176,7 @@ export default function CartPage() {
                       {/* Line Total */}
                       <div className="text-right">
                         <div className="text-lg font-bold text-foreground">
-                          PKR {Math.round(item.product.price * item.quantity)}
+                          PKR {formatPKR(item.product.price * item.quantity)}
                         </div>
                       </div>
                     </div>
@@ -205,7 +210,7 @@ export default function CartPage() {
                 <div className="space-y-4 mb-6 pb-6 border-b border-border">
                   <div className="flex justify-between text-muted-foreground">
                     <span>Subtotal</span>
-                    <span>PKR {Math.round(total)}</span>
+                    <span>PKR {formatPKR(total)}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Shipping</span>
@@ -218,7 +223,7 @@ export default function CartPage() {
                 <div className="flex justify-between items-center mb-6">
                   <span className="font-semibold text-foreground">Total</span>
                   <span className="text-2xl font-bold text-primary">
-                    PKR {grandTotal}
+                    PKR {formatPKR(grandTotal)}
                   </span>
                 </div>
 
