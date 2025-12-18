@@ -3,7 +3,7 @@ import { getStripe } from "@/lib/stripe";
 
 export async function POST(req: Request) {
   try {
-    const stripe = getStripe();
+    const stripe = await getStripe();
     const body = await req.json();
     const { items, customerInfo, orderId } = body;
 
