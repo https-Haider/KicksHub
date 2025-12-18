@@ -7,9 +7,6 @@ import {
 } from "@/lib/ai/seo";
 import { checkMongoRateLimit } from "@/lib/rate-limit";
 
-// Admin password - in production, use proper auth
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "haider1011";
-
 // Rate limit: 10 requests per hour per admin
 const RATE_LIMIT = 10;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
@@ -18,7 +15,17 @@ export async function POST(req: Request) {
   try {
     // 1. Admin authentication check
     const authHeader = req.headers.get("x-admin-password");
-    if (!authHeader || authHeader !== ADMIN_PASSWORD) {
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    
+    if (!adminPassword) {
+      console.error("[AI-SEO] ADMIN_PASSWORD environment variable is not configured");
+      return NextResponse.json(
+        { error: "Server configuration error. Contact administrator." },
+        { status: 500 }
+      );
+    }
+    
+    if (!authHeader || authHeader !== adminPassword) {
       console.log(
         `[AI-SEO] Unauthorized access attempt at ${new Date().toISOString()}`
       );

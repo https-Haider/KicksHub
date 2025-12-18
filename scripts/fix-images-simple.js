@@ -1,6 +1,7 @@
 /**
  * Simple image fix script
  */
+require("dotenv").config({ path: ".env.local" });
 const { MongoClient } = require("mongodb");
 
 const IMAGES = [
@@ -46,9 +47,12 @@ const IMAGES = [
   "https://images.unsplash.com/photo-1600185652960-c9d8869d015c?w=800&h=800&fit=crop",
 ];
 
-const MONGODB_URI =
-  process.env.MONGODB_URI ||
-  "mongodb+srv://haider:haider1011@cluster0.ts7eadi.mongodb.net/?appName=Cluster0";
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error("Error: MONGODB_URI environment variable is required");
+  process.exit(1);
+}
 
 async function fix() {
   console.log("Connecting to MongoDB...");

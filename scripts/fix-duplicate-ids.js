@@ -1,10 +1,16 @@
 /**
  * Fix duplicate product IDs by assigning new unique IDs
  */
+require("dotenv").config({ path: ".env.local" });
 const { MongoClient } = require("mongodb");
+const crypto = require("crypto");
 
-const MONGODB_URI =
-  "mongodb+srv://haider:haider1011@cluster0.ts7eadi.mongodb.net/?appName=Cluster0";
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error("Error: MONGODB_URI environment variable is required");
+  process.exit(1);
+}
 
 async function fixDuplicateIds() {
   console.log("Checking for duplicate IDs...\n");
@@ -43,7 +49,8 @@ async function fixDuplicateIds() {
     // Keep the first one, reassign IDs to the rest
     for (let i = 1; i < productsWithDuplicateId.length; i++) {
       const product = productsWithDuplicateId[i];
-      const newId = Date.now() + Math.floor(Math.random() * 10000) + i;
+      // Use crypto for better uniqueness
+      const newId = parseInt(crypto.randomBytes(6).toString("hex"), 16);
 
       await col.updateOne(
         { _id: product._id },

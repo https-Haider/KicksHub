@@ -3,12 +3,16 @@
  *
  * Usage: node scripts/add-original-products.js
  */
+require("dotenv").config({ path: ".env.local" });
 
 const { MongoClient } = require("mongodb");
 
-const MONGODB_URI =
-  process.env.MONGODB_URI ||
-  "mongodb+srv://haider:haider1011@cluster0.ts7eadi.mongodb.net/?appName=Cluster0";
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error("Error: MONGODB_URI environment variable is required");
+  process.exit(1);
+}
 
 // Original KicksHub products (premium vintage sneakers)
 const ORIGINAL_PRODUCTS = [

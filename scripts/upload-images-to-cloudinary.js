@@ -4,23 +4,34 @@
  *
  * Usage: node scripts/upload-images-to-cloudinary.js
  */
+require("dotenv").config({ path: ".env.local" });
 
 const { MongoClient } = require("mongodb");
 const https = require("https");
 const http = require("http");
 const cloudinary = require("cloudinary").v2;
 
+// Validate required environment variables
+const requiredEnvVars = [
+  "CLOUDINARY_CLOUD_NAME",
+  "CLOUDINARY_API_KEY",
+  "CLOUDINARY_API_SECRET",
+  "MONGODB_URI",
+];
+const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
+if (missingVars.length > 0) {
+  console.error("Error: Missing required environment variables:", missingVars.join(", "));
+  process.exit(1);
+}
+
 // Cloudinary config
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "dhrt728up",
-  api_key: process.env.CLOUDINARY_API_KEY || "412746828633131",
-  api_secret:
-    process.env.CLOUDINARY_API_SECRET || "kUWIh3UxtvO8ihb3dqqvRdINlQs",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const MONGODB_URI =
-  process.env.MONGODB_URI ||
-  "mongodb+srv://haider:haider1011@cluster0.ts7eadi.mongodb.net/?appName=Cluster0";
+const MONGODB_URI = process.env.MONGODB_URI;
 
 // Unsplash shoe image URLs (will be downloaded and re-uploaded to Cloudinary)
 const UNSPLASH_IMAGES = [

@@ -36,9 +36,10 @@ function mapCategory(category) {
   return CATEGORY_MAP[lower] || CATEGORY_MAP["default"];
 }
 
-// Generate a unique numeric ID based on timestamp + random
+// Generate a unique numeric ID using crypto for better uniqueness
 function generateId() {
-  return Date.now() + Math.floor(Math.random() * 1000);
+  const crypto = require("crypto");
+  return parseInt(crypto.randomBytes(6).toString("hex"), 16);
 }
 
 // Generate slug from name

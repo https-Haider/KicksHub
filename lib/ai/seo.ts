@@ -189,13 +189,11 @@ export function enforceConstraints(
 export async function generateSeoWithAI(
   input: GenerateSeoRequest
 ): Promise<GenerateSeoResponse> {
-  const apiKey =
-    process.env.AI_API_KEY ||
-    "sk-do-zdO1pbrm4AM8HaJMkL--9KomKShDFx8Gg4xzrXSFfOYzKHLrAi2U4VQQkJ";
-  const baseUrl = "https://inference.do-ai.run/v1";
+  const apiKey = process.env.AI_API_KEY;
+  const baseUrl = process.env.AI_API_URL || "https://inference.do-ai.run/v1";
 
   if (!apiKey) {
-    throw new Error("AI_API_KEY is not configured");
+    throw new Error("AI_API_KEY environment variable is not configured");
   }
 
   const prompt = buildSeoPrompt(input);
