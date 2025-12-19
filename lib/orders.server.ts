@@ -23,7 +23,8 @@ export type Order = {
   city?: string;
   state?: string;
   zipCode?: string;
-  status: "confirmed" | "shipped" | "delivered" | "otp_sent";
+  status: "pending_payment" | "confirmed" | "shipped" | "delivered" | "cancelled" | "otp_sent";
+  paymentMethod?: string;
   createdAt: string;
   otpHash?: string | null;
   otpExpiresAt?: number | null; // epoch ms

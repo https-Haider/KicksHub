@@ -118,25 +118,29 @@ export async function POST(req: Request) {
       );
     }
 
-    // new orders are confirmed immediately (no OTP required)
-    const created = await saveOrder({ ...body, status: "confirmed" });
+    // Set initial status based on payment method
+    const initialStatus = body.paymentMethod === "stripe" ? "pending_payment" : "confirmed";
+    const created = await saveOrder({ ...body, status: initialStatus });
 
-    // send confirmation email (best-effort)
-    try {
-      const transporter = createTransporter();
-      await transporter.sendMail({
-        from: process.env.FROM_EMAIL,
-        to: created.email,
-        subject: `Order confirmed — ${created.id}`,
-        html: confirmationHtml(created),
-        text: `Your order ${created.id} is confirmed. Total ${created.total}`,
-      });
-    } catch (emailErr: unknown) {
-      console.error(
-        "Failed to send confirmation email:",
-        emailErr instanceof Error ? emailErr.message : emailErr
-      );
-      // proceed without failing order creation
+    // Only send confirmation email for COD orders
+    // Stripe orders will get email after successful payment via webhook or success page
+    if (body.paymentMethod !== "stripe") {
+      try {
+        const transporter = createTransporter();
+        await transporter.sendMail({
+          from: process.env.FROM_EMAIL,
+          to: created.email,
+          subject: `Order confirmed — ${created.id}`,
+          html: confirmationHtml(created),
+          text: `Your order ${created.id} is confirmed. Total ${created.total}`,
+        });
+      } catch (emailErr: unknown) {
+        console.error(
+          "Failed to send confirmation email:",
+          emailErr instanceof Error ? emailErr.message : emailErr
+        );
+        // proceed without failing order creation
+      }
     }
 
     return NextResponse.json(created);

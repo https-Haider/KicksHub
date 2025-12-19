@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
+import { headers } from "next/headers";
 
 export async function POST(req: Request) {
   try {
     const stripe = await getStripe();
     const body = await req.json();
     const { items, customerInfo, orderId } = body;
+
+    // Get base URL from env or construct from request headers
+    const headersList = await headers();
+    const host = headersList.get("host") || "localhost:3000";
+    const protocol = headersList.get("x-forwarded-proto") || "https";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "No items provided" }, { status: 400 });
@@ -54,12 +61,8 @@ export async function POST(req: Request) {
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: `${
-        process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-      }/order-success/${orderId}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${
-        process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-      }/checkout?canceled=true`,
+      success_url: `${baseUrl}/order-success/${orderId}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/checkout?canceled=true`,
       customer_email: customerInfo?.email,
       metadata: {
         orderId: orderId,
