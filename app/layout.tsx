@@ -141,29 +141,21 @@ export default function RootLayout({
             content={process.env.NEXT_PUBLIC_GSC_VERIFICATION}
           />
         )}
-        {/* Google Analytics (GA4) - defer loading for better performance */}
-        {process.env.NEXT_PUBLIC_GA_ID && (
-          <script
-            // eslint-disable-next-line react/no-danger
-            dangerouslySetInnerHTML={{
-              __html: `
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', { send_page_view: true });
-                // Load gtag.js after page load
-                if (typeof window !== 'undefined') {
-                  window.addEventListener('load', function() {
-                    var s = document.createElement('script');
-                    s.src = 'https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}';
-                    s.async = true;
-                    document.head.appendChild(s);
-                  });
-                }
-              `,
-            }}
-          />
-        )}
+        {/* Google Analytics (GA4) */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-EVQ3WR6K16"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-EVQ3WR6K16');
+            `,
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}

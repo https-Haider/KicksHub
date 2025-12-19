@@ -13,9 +13,14 @@ export function AnalyticsWrapper() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Defer loading until after initial render
-    const timer = setTimeout(() => setMounted(true), 100);
-    return () => clearTimeout(timer);
+    // Defer loading until browser is idle for better performance
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const id = requestIdleCallback(() => setMounted(true), { timeout: 2000 });
+      return () => cancelIdleCallback(id);
+    } else {
+      // Fallback for browsers without requestIdleCallback (Safari)
+      setMounted(true);
+    }
   }, []);
 
   if (!mounted) return null;
