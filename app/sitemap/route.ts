@@ -23,6 +23,7 @@ interface SitemapUrl {
     | "never";
   priority: number;
 }
+export const dynamic = "force-dynamic";
 
 /** Escape special XML characters to produce valid XML */
 function escapeXml(str: string): string {

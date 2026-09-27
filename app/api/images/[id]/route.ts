@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 import { getGridFSBucket } from "@/lib/images.server";
 import type { Readable } from "stream";
 
-type Context = { params: { id: string } | Promise<{ id: string }> };
+type Context = { params: Promise<{ id: string }> };
 
 interface GridFSFile {
   filename?: string;
@@ -23,7 +23,7 @@ export async function GET(req: Request, ctx: Context) {
 
     // Try to determine content-type from filename metadata when possible
     const head = await bucket.find({ _id: oid }).limit(1).toArray();
-    const fileDoc = head[0] as GridFSFile | undefined;
+    const fileDoc = head[0] as unknown as GridFSFile | undefined;
     const filename = fileDoc?.filename ?? "image";
     const ext = filename.split(".").pop()?.toLowerCase() ?? "";
     const mime =

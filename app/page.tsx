@@ -7,6 +7,8 @@ import { getProductSlug } from "@/lib/products";
 import { ImageIcon } from "lucide-react";
 import { CartButton } from "@/components/cart-button";
 import { LandingReviewsWrapper } from "@/components/landing-reviews-wrapper";
+import { formatPKR } from "@/lib/commerce";
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
   // Fetch products server-side for the featured section
@@ -19,7 +21,7 @@ export default async function Home() {
   }
 
   // Show first 4 products as featured (all categories are shoes/sneakers)
-  const featuredProducts = (all || []).slice(0, 4);
+  const featuredProducts = (all || []).filter((product) => product.inStock !== false && (product.stockQuantity ?? 1) > 0).slice(0, 4);
 
   return (
     <main className="min-h-screen bg-background">
@@ -83,7 +85,7 @@ export default async function Home() {
                 Discover Vintage & Thrifted Shoes
               </h2>
               <p className="text-lg text-muted-foreground max-w-md">
-                Curated collection of authentic vintage and thrifted sneakers.
+                Browse our current collection of vintage and thrifted sneakers.
                 From classic Jordans to retro Nikes, find your perfect pair.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -92,12 +94,12 @@ export default async function Home() {
                     Shop Now
                   </Button>
                 </Link>
-                <Button
+                <Button asChild
                   size="lg"
                   variant="outline"
                   className="w-full sm:w-auto bg-transparent"
                 >
-                  Learn More
+                  <Link href="/about">Learn More</Link>
                 </Button>
               </div>
             </div>
@@ -163,7 +165,7 @@ export default async function Home() {
                       </h3>
                       <div className="flex items-center justify-between">
                         <span className="text-2xl font-bold text-primary">
-                          PKR {product.price}
+                          {formatPKR(product.price)}
                         </span>
                         <Button size="sm" variant="outline">
                           View
@@ -182,28 +184,6 @@ export default async function Home() {
                 View All Products
               </Button>
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Trust Section */}
-      <section className="py-16 bg-background" aria-label="Why choose us">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-8 md:grid-cols-3">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">5K+</div>
-              <p className="text-muted-foreground">Happy Sneaker Collectors</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">100%</div>
-              <p className="text-muted-foreground">
-                Authentic Shoes Guaranteed
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">24/7</div>
-              <p className="text-muted-foreground">Customer Support</p>
-            </div>
           </div>
         </div>
       </section>
@@ -231,7 +211,7 @@ export default async function Home() {
                 </li>
                 <li>
                   <Link
-                    href="#"
+                    href="/about"
                     className="hover:text-foreground transition-colors"
                   >
                     Careers
@@ -239,7 +219,7 @@ export default async function Home() {
                 </li>
                 <li>
                   <Link
-                    href="#"
+                    href="/products"
                     className="hover:text-foreground transition-colors"
                   >
                     Blog
@@ -252,7 +232,7 @@ export default async function Home() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <Link
-                    href="#"
+                    href="/contact"
                     className="hover:text-foreground transition-colors"
                   >
                     Help Center
@@ -281,7 +261,7 @@ export default async function Home() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <Link
-                    href="#"
+                    href="/policies/privacy"
                     className="hover:text-foreground transition-colors"
                   >
                     Privacy
@@ -289,7 +269,7 @@ export default async function Home() {
                 </li>
                 <li>
                   <Link
-                    href="#"
+                    href="/policies/terms"
                     className="hover:text-foreground transition-colors"
                   >
                     Terms
@@ -297,7 +277,7 @@ export default async function Home() {
                 </li>
                 <li>
                   <Link
-                    href="#"
+                    href="/policies/privacy"
                     className="hover:text-foreground transition-colors"
                   >
                     Cookies
@@ -310,7 +290,7 @@ export default async function Home() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <Link
-                    href="#"
+                    href="/contact"
                     className="hover:text-foreground transition-colors"
                   >
                     Twitter
@@ -318,7 +298,7 @@ export default async function Home() {
                 </li>
                 <li>
                   <Link
-                    href="#"
+                    href="/contact"
                     className="hover:text-foreground transition-colors"
                   >
                     Instagram
@@ -326,7 +306,7 @@ export default async function Home() {
                 </li>
                 <li>
                   <Link
-                    href="#"
+                    href="/contact"
                     className="hover:text-foreground transition-colors"
                   >
                     Facebook
@@ -336,7 +316,7 @@ export default async function Home() {
             </div>
           </div>
           <div className="border-t border-border pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2025 KicksHub. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} KicksHub. All rights reserved.</p>
           </div>
         </div>
       </footer>

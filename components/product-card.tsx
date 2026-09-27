@@ -1,36 +1,27 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ImageIcon } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import type { Product } from "@/lib/products";
+import { getProductSlug } from "@/lib/products";
+import { formatPKR } from "@/lib/commerce";
 
-interface ProductCardProps {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  images?: string[];
-  category: string;
-}
+interface ProductCardProps { product: Product }
 
-export function ProductCard({
-  id,
-  name,
-  price,
-  image,
-  images,
-  category,
-}: ProductCardProps) {
+export function ProductCard({ product }: ProductCardProps) {
   // Calculate total images (main + additional)
-  const totalImages = (image ? 1 : 0) + (images?.length || 0);
+  const totalImages = new Set([product.image, ...(product.images || [])].filter(Boolean)).size;
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group cursor-pointer">
+    <Link href={`/products/${getProductSlug(product)}`} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg">
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group h-full">
       <div className="relative h-64 overflow-hidden bg-muted">
-        <img
-          src={image || "/placeholder.svg"}
-          alt={name || "Product image"}
-          loading="lazy"
-          decoding="async"
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        <Image
+          src={product.image || "/placeholder.svg"}
+          alt={product.name || "Product image"}
+          fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
         {/* Image count indicator */}
         {totalImages > 1 && (
@@ -42,15 +33,16 @@ export function ProductCard({
       </div>
       <div className="p-4">
         <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
-          {name}
+          {product.name}
         </h3>
         <div className="flex items-center justify-between">
-          <span className="text-2xl font-bold text-primary">${price}</span>
+          <span className="text-2xl font-bold text-primary">{formatPKR(product.price)}</span>
           <Button size="sm" variant="outline">
             View
           </Button>
         </div>
       </div>
     </Card>
+    </Link>
   );
 }

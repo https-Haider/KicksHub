@@ -1,0 +1,21 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
+import { siteConfig } from "@/lib/config";
+import { FREE_SHIPPING_THRESHOLD_PKR, SHIPPING_FEE_PKR, formatPKR } from "@/lib/commerce";
+
+const titles={privacy:"Privacy Policy",terms:"Terms and Conditions",shipping:"Shipping Policy",returns:"Return Policy"} as const;
+type Policy=keyof typeof titles;
+export function generateStaticParams(){return Object.keys(titles).map(policy=>({policy}))}
+export async function generateMetadata({params}:{params:Promise<{policy:string}>}):Promise<Metadata>{const {policy}=await params;const title=titles[policy as Policy];return title?{title,alternates:{canonical:`/policies/${policy}`}}:{}}
+
+function PolicyContent({policy}:{policy:Policy}){
+  if(policy==="privacy") return <><p>We collect the information needed to operate the store, respond to enquiries, process orders and payments, arrange delivery, prevent abuse and maintain order records. This can include your name, contact details, delivery address, ordered items and payment status.</p><h2>Payments and service providers</h2><p>Card payments are processed by Stripe. KicksHub does not receive your complete card number. Hosting, database, email, analytics and delivery providers may process limited information when needed to provide their services.</p><h2>Your choices</h2><p>You may ask about or request correction of personal information associated with an order by contacting us. Some records may need to be retained for operational, fraud-prevention or legal reasons.</p></>;
+  if(policy==="terms") return <><p>Product availability, price and stock are confirmed when an order is submitted. Adding a product to the cart does not reserve it. We may reject or cancel an order when an item is unavailable, the supplied information is invalid or payment cannot be verified.</p><h2>Product listings</h2><p>Pre-owned products can show signs of wear. Review each listing’s photographs, size and condition notes before ordering. Product photographs and descriptions apply to the listed pair unless stated otherwise.</p><h2>Payments</h2><p>Cash on delivery and card payment are offered only when displayed during checkout. A card order is confirmed as paid only after Stripe verifies the payment.</p></>;
+  if(policy==="shipping") return <><p>Standard shipping costs {formatPKR(SHIPPING_FEE_PKR)}. Shipping is free when the merchandise subtotal is above {formatPKR(FREE_SHIPPING_THRESHOLD_PKR)}.</p><p>{siteConfig.policies.deliveryEstimate?`Estimated delivery: ${siteConfig.policies.deliveryEstimate}.`:"A delivery estimate will be provided when available. Contact us before ordering if timing is important."}</p><p>Customers are responsible for providing a complete Pakistani delivery address and reachable phone number. Delivery timing can vary by destination and carrier.</p></>;
+  return <><p>Because products are pre-owned and can be unique, contact KicksHub promptly after delivery before returning an item. Include the order reference and explain the issue. Do not send an item back until return instructions have been provided.</p><p>{siteConfig.policies.returnPeriodDays?`Eligible return requests must be made within ${siteConfig.policies.returnPeriodDays} days of delivery.`:"A fixed return-request period has not yet been published. Confirm eligibility with KicksHub before ordering."}</p><p>Returned products should remain in the condition in which they were received. Eligibility may depend on the listing, item condition and reason for return.</p></>;
+}
+
+export default async function PolicyPage({params}:{params:Promise<{policy:string}>}){const {policy}=await params;const title=titles[policy as Policy];if(!title)notFound();return <main className="min-h-screen bg-background"><SiteHeader/><article className="prose prose-neutral mx-auto max-w-3xl px-4 py-16 dark:prose-invert"><h1>{title}</h1><PolicyContent policy={policy as Policy}/><h2>Contact</h2><p>For questions, use the <Link href="/contact">contact page</Link> or the verified WhatsApp number shown there.</p><p className="text-sm text-muted-foreground">Last updated: September 26, 2026.</p></article><SiteFooter/></main>}

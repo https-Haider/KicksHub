@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getProductById, getProductBySlug } from "@/lib/products.server";
 import ProductDetailClient from "@/components/product-detail-client";
 import { ProductSchema, BreadcrumbSchema } from "@/components/seo/json-ld";
+import { notFound, redirect } from "next/navigation";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -69,6 +70,9 @@ export default async function ProductDetailPage({ params }: Props) {
     !Number.isNaN(maybeNum) && String(maybeNum) === String(id)
       ? await getProductById(maybeNum)
       : await getProductBySlug(id as string);
+
+  if (!product || product.isActive === false || product.published === false) notFound();
+  if (product.slug && product.slug !== id) redirect(`/products/${product.slug}`);
 
   const baseUrl = process.env.SITE_URL || "https://www.kickshub.site";
   const productUrl = `${baseUrl}/products/${id}`;

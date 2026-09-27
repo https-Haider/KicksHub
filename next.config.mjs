@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   // Set Turbopack root to fix workspace root issue
   turbopack: {
     root: process.cwd(),

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getProductById } from "@/lib/products.server";
 import { updateProduct, deleteProduct } from "@/lib/products.server";
 
-type Context = { params: { id: string } | Promise<{ id: string }> };
+type Context = { params: Promise<{ id: string }> };
 
 export async function GET(req: Request, ctx: Context) {
   try {

@@ -9,36 +9,37 @@ export const siteConfig = {
   name: "KicksHub",
   tagline: "Premium Thrift Sneakers",
   description:
-    "Pakistan's premier destination for authentic pre-owned sneakers.",
+    "Pre-owned sneakers and footwear available for delivery in Pakistan.",
 
   // Contact Information
   contact: {
-    email:
-      process.env.NEXT_PUBLIC_CONTACT_EMAIL || "thriftshoes.boss@gmail.com",
-    phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "+923491441882",
-    phoneFormatted:
-      process.env.NEXT_PUBLIC_CONTACT_PHONE_FORMATTED || "+92 349 144 1882",
-    whatsapp: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "923491441882",
+    email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "",
+    phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "+923177258837",
+    phoneFormatted: process.env.NEXT_PUBLIC_CONTACT_PHONE_FORMATTED || "+92 317 725 8837",
+    whatsapp: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "923177258837",
     address: {
-      line1: "Shop #12, Liberty Market",
-      line2: "Lahore, Pakistan",
+      line1: process.env.NEXT_PUBLIC_ADDRESS_LINE_1 || "",
+      line2: process.env.NEXT_PUBLIC_ADDRESS_LINE_2 || "",
     },
   },
 
   // Business Hours
   businessHours: {
-    weekdays: "11:00 AM - 9:00 PM", // Mon - Sat
-    sunday: "2:00 PM - 8:00 PM",
+    weekdays: process.env.NEXT_PUBLIC_HOURS_WEEKDAYS || "",
+    sunday: process.env.NEXT_PUBLIC_HOURS_SUNDAY || "",
   },
 
   // Social Media Links
   social: {
-    instagram:
-      process.env.NEXT_PUBLIC_INSTAGRAM_URL || "https://instagram.com/kickshub",
-    facebook:
-      process.env.NEXT_PUBLIC_FACEBOOK_URL || "https://facebook.com/kickshub",
-    twitter:
-      process.env.NEXT_PUBLIC_TWITTER_URL || "https://twitter.com/kickshub",
+    instagram: process.env.NEXT_PUBLIC_INSTAGRAM_URL || "https://www.instagram.com/haider_hunjraa",
+    facebook: process.env.NEXT_PUBLIC_FACEBOOK_URL || "https://www.facebook.com/share/196NSceRLu/",
+    twitter: process.env.NEXT_PUBLIC_TWITTER_URL || "",
+  },
+  policies: {
+    returnPeriodDays: process.env.NEXT_PUBLIC_RETURN_PERIOD_DAYS
+      ? Number(process.env.NEXT_PUBLIC_RETURN_PERIOD_DAYS)
+      : null,
+    deliveryEstimate: process.env.NEXT_PUBLIC_DELIVERY_ESTIMATE || "",
   },
 } as const;
 

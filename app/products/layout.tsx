@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Shop All Sneakers",
   description:
-    "Browse our complete collection of vintage and thrifted sneakers. Find authentic Air Jordans, Nike, Adidas, New Balance and more at affordable prices in Pakistan.",
+    "Browse the current KicksHub collection of vintage and thrifted footwear available in Pakistan.",
   keywords: [
     "buy sneakers Pakistan",
     "vintage sneakers shop",

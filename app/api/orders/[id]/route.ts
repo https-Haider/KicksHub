@@ -7,7 +7,7 @@ import {
   sendOrderDeliveredEmail,
 } from "@/lib/email.server";
 
-type Context = { params: { id: string } | Promise<{ id: string }> };
+type Context = { params: Promise<{ id: string }> };
 
 export async function GET(req: Request, ctx: Context) {
   try {

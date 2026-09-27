@@ -1,7 +1,7 @@
 // app/api/orders/route.ts
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-import { saveOrder, getOrders } from "@/lib/orders.server";
+import { createValidatedOrder, getOrders } from "@/lib/orders.server";
 
 function createTransporter() {
   return nodemailer.createTransport({
@@ -111,7 +111,7 @@ function confirmationHtml(order: Order) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    if (!body || !body.items || !body.email) {
+    if (!body || !body.items || !body.email || !body.idempotencyKey) {
       return NextResponse.json(
         { error: "Invalid order payload" },
         { status: 400 }
@@ -119,8 +119,7 @@ export async function POST(req: Request) {
     }
 
     // Set initial status based on payment method
-    const initialStatus = body.paymentMethod === "stripe" ? "pending_payment" : "confirmed";
-    const created = await saveOrder({ ...body, status: initialStatus });
+    const created = await createValidatedOrder(body);
 
     // Only send confirmation email for COD orders
     // Stripe orders will get email after successful payment via webhook or success page
@@ -149,10 +148,9 @@ export async function POST(req: Request) {
       "POST /api/orders error:",
       err instanceof Error ? err.message : err
     );
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    const message = err instanceof Error ? err.message : "Internal Server Error";
+    const known = ["INVALID_ORDER", "INVALID_QUANTITY", "PRODUCT_UNAVAILABLE", "INVALID_SIZE", "INSUFFICIENT_STOCK"].includes(message);
+    return NextResponse.json({ error: known ? message.replaceAll("_", " ").toLowerCase() : "Unable to create order" }, { status: known ? 409 : 500 });
   }
 }
 

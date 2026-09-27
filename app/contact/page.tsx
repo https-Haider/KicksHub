@@ -107,7 +107,7 @@ export default function ContactPage() {
         <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {/* Contact Information */}
           <div className="space-y-6">
-            <Card>
+            {siteConfig.contact.phone && <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Phone className="h-5 w-5 text-primary" />
@@ -123,9 +123,9 @@ export default function ContactPage() {
                   {siteConfig.contact.phoneFormatted}
                 </a>
               </CardContent>
-            </Card>
+            </Card>}
 
-            <Card>
+            {siteConfig.contact.email && <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Mail className="h-5 w-5 text-primary" />
@@ -141,9 +141,9 @@ export default function ContactPage() {
                   {siteConfig.contact.email}
                 </a>
               </CardContent>
-            </Card>
+            </Card>}
 
-            <Card>
+            {siteConfig.contact.address.line1 && <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-primary" />
@@ -158,9 +158,9 @@ export default function ContactPage() {
                   {siteConfig.contact.address.line2}
                 </p>
               </CardContent>
-            </Card>
+            </Card>}
 
-            <Card>
+            {(siteConfig.businessHours.weekdays || siteConfig.businessHours.sunday) && <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="h-5 w-5 text-primary" />
@@ -181,7 +181,7 @@ export default function ContactPage() {
                   </span>
                 </div>
               </CardContent>
-            </Card>
+            </Card>}
 
             {/* Social Media */}
             <Card>
@@ -234,7 +234,7 @@ export default function ContactPage() {
                     </h3>
                     <p className="text-muted-foreground mb-6">
                       Thank you for reaching out. We&apos;ll get back to you
-                      within 24 hours.
+                      as soon as possible.
                     </p>
                     <Button onClick={() => setIsSubmitted(false)}>
                       Send Another Message
@@ -358,7 +358,7 @@ export default function ContactPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  All our sneakers are thoroughly verified for authenticity. We
+                  Review the listing photos and condition details carefully. We
                   provide detailed photos and descriptions. If you have any
                   concerns, feel free to contact us before purchasing.
                 </p>
@@ -373,7 +373,7 @@ export default function ContactPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  We accept returns within 3 days of delivery if the product
+                  {siteConfig.policies.returnPeriodDays ? `We accept eligible returns within ${siteConfig.policies.returnPeriodDays} days of delivery if the product` : "Return timing requires owner confirmation. See the Return Policy; if the product"}
                   doesn&apos;t match the description. Items must be in their
                   original condition. Contact us to initiate a return.
                 </p>

@@ -10,6 +10,8 @@ import { useCart } from "@/lib/cart-context";
 import { CartButton } from "@/components/cart-button";
 import Image from "next/image";
 import { ProductImageGallery } from "@/components/product-image-gallery";
+import { formatPKR, FREE_SHIPPING_THRESHOLD_PKR } from "@/lib/commerce";
+import { siteConfig } from "@/lib/config";
 
 export default function ProductDetailClient({ product }: { product: any }) {
   const [quantity, setQuantity] = useState(1);
@@ -162,7 +164,7 @@ export default function ProductDetailClient({ product }: { product: any }) {
 
             <div className="border-t border-b border-border py-6">
               <div className="text-4xl font-bold text-primary mb-2">
-                PKR {product.price}
+                {formatPKR(product.price)}
               </div>
               <p className="text-muted-foreground">SKU: {product.sku}</p>
             </div>
@@ -314,13 +316,13 @@ export default function ProductDetailClient({ product }: { product: any }) {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping:</span>
                   <span className="font-medium text-foreground">
-                    Free on orders over PKR 5000
+                    Free on orders over PKR {FREE_SHIPPING_THRESHOLD_PKR.toLocaleString("en-PK")}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Returns:</span>
                   <span className="font-medium text-foreground">
-                    30-day guarantee
+                    {siteConfig.policies.returnPeriodDays ? `${siteConfig.policies.returnPeriodDays}-day return window` : "See return policy"}
                   </span>
                 </div>
               </div>

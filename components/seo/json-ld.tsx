@@ -9,7 +9,7 @@ export function OrganizationSchema({
   name = "KicksHub",
   url = "https://www.kickshub.site",
   logo = "https://www.kickshub.site/placeholder-logo.png",
-  description = "Pakistan's #1 destination for authentic vintage and thrifted sneakers.",
+  description = "Pre-owned sneakers and footwear available for delivery in Pakistan.",
 }: OrganizationSchemaProps) {
   const schema = {
     "@context": "https://schema.org",

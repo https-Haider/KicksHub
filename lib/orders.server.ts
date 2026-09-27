@@ -1,12 +1,14 @@
 // lib/orders.server.ts
 import crypto from "crypto";
-import { MongoClient, WithId, Document } from "mongodb";
+import { MongoClient, Document } from "mongodb";
+import { calculateTotals } from "@/lib/commerce";
 
 export type OrderItem = {
   productId: number;
   productName: string;
   price: number;
   quantity: number;
+  selectedSize?: number | string;
 };
 
 export type Order = {
@@ -31,9 +33,11 @@ export type Order = {
   otpLastSentAt?: number | null; // epoch ms when OTP was last sent (rate limiting)
   trackingNumber?: string | null;
   carrier?: string | null;
+  paymentStatus?: "pending" | "awaiting_payment" | "paid" | "failed";
+  idempotencyKey?: string;
 };
 
-interface OrderDocument extends WithId<Document> {
+interface OrderDocument extends Document {
   id: string;
   items?: OrderItem[];
   subtotal?: number;
@@ -98,20 +102,22 @@ function toOrder(doc: OrderDocument): Order {
     city: doc.city,
     state: doc.state,
     zipCode: doc.zipCode,
-    status: doc.status || "confirmed",
-    createdAt: doc.createdAt,
+    status: (doc.status as Order["status"]) || "confirmed",
+    createdAt: doc.createdAt || new Date(0).toISOString(),
     otpHash: doc.otpHash ?? null,
     otpExpiresAt: doc.otpExpiresAt ?? null,
     otpLastSentAt: doc.otpLastSentAt ?? null,
     trackingNumber: doc.trackingNumber ?? null,
     carrier: doc.carrier ?? null,
+    paymentStatus: doc.paymentStatus,
+    idempotencyKey: doc.idempotencyKey,
   };
 }
 
 async function getCollection() {
   const client = await getClient();
   const db = client.db(MONGODB_DB);
-  return db.collection(MONGODB_COLLECTION);
+  return db.collection<OrderDocument>(MONGODB_COLLECTION);
 }
 
 export async function getOrders(): Promise<Order[]> {
@@ -142,6 +148,45 @@ export async function saveOrder(
   const col = await getCollection();
   await col.insertOne({ ...full });
   return full;
+}
+
+type OrderRequest = Pick<Order, "customerName" | "email" | "phone" | "address" | "city" | "state" | "zipCode"> & {
+  items: Array<{ productId: number; quantity: number; selectedSize?: number | string }>;
+  paymentMethod: "cod" | "stripe";
+  idempotencyKey: string;
+};
+
+export async function createValidatedOrder(input: OrderRequest): Promise<Order> {
+  if (!input.idempotencyKey || !input.items?.length) throw new Error("INVALID_ORDER");
+  const client = await getClient();
+  const session = client.startSession();
+  try {
+    return await session.withTransaction(async () => {
+      const db = client.db(MONGODB_DB);
+      const orders = db.collection<OrderDocument>(MONGODB_COLLECTION);
+      const products = db.collection(process.env.MONGODB_PRODUCTS_COLLECTION ?? "products");
+      const duplicate = await orders.findOne({ idempotencyKey: input.idempotencyKey }, { session });
+      if (duplicate) return toOrder(duplicate as OrderDocument);
+      const validated: OrderItem[] = [];
+      for (const requested of input.items) {
+        if (!Number.isInteger(requested.quantity) || requested.quantity < 1) throw new Error("INVALID_QUANTITY");
+        const product = await products.findOne({ id: requested.productId, isActive: { $ne: false }, published: { $ne: false } }, { session });
+        if (!product || product.inStock === false) throw new Error("PRODUCT_UNAVAILABLE");
+        if ((product.sizes?.length || 0) && !product.sizes.map(String).includes(String(requested.selectedSize ?? ""))) throw new Error("INVALID_SIZE");
+        const stock = Number(product.stockQuantity ?? 0);
+        if (stock < requested.quantity) throw new Error("INSUFFICIENT_STOCK");
+        validated.push({ productId: product.id, productName: product.name, price: Number(product.price), quantity: requested.quantity, selectedSize: requested.selectedSize });
+      }
+      const totals = calculateTotals(validated);
+      const full: Order = { ...input, ...totals, tax: 0, id: makeOrderId(), createdAt: new Date().toISOString(), status: input.paymentMethod === "stripe" ? "pending_payment" : "confirmed", paymentStatus: input.paymentMethod === "stripe" ? "awaiting_payment" : "pending", items: validated, otpHash: null, otpExpiresAt: null, otpLastSentAt: null, trackingNumber: null, carrier: null };
+      for (const item of validated) {
+        const result = await products.updateOne({ id: item.productId, stockQuantity: { $gte: item.quantity } }, { $inc: { stockQuantity: -item.quantity } }, { session });
+        if (result.modifiedCount !== 1) throw new Error("INSUFFICIENT_STOCK");
+      }
+      await orders.insertOne(full, { session });
+      return full;
+    }) as Order;
+  } finally { await session.endSession(); }
 }
 
 export async function updateOrderById(

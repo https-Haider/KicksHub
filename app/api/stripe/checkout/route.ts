@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { headers } from "next/headers";
+import { getOrderById } from "@/lib/orders.server";
 
 export async function POST(req: Request) {
   try {
     const stripe = await getStripe();
     const body = await req.json();
-    const { items, customerInfo, orderId } = body;
+    const { orderId } = body;
+    const order = await getOrderById(orderId);
+    if (!order || order.paymentMethod !== "stripe" || order.status !== "pending_payment") {
+      return NextResponse.json({ error: "Invalid order" }, { status: 400 });
+    }
+    const items = order.items;
 
     // Get base URL from env or construct from request headers
     const headersList = await headers();
@@ -36,11 +42,7 @@ export async function POST(req: Request) {
     }));
 
     // Add shipping as a line item if applicable
-    const subtotal = items.reduce(
-      (sum: number, item: any) => sum + item.price * item.quantity,
-      0
-    );
-    const shippingCost = subtotal > 5000 ? 0 : 200;
+    const shippingCost = order.shipping;
 
     if (shippingCost > 0) {
       lineItems.push({
@@ -63,15 +65,10 @@ export async function POST(req: Request) {
       mode: "payment",
       success_url: `${baseUrl}/order-success/${orderId}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/checkout?canceled=true`,
-      customer_email: customerInfo?.email,
+      customer_email: order.email,
       metadata: {
         orderId: orderId,
-        customerName: customerInfo?.customerName,
-        phone: customerInfo?.phone,
-        address: customerInfo?.address,
-        city: customerInfo?.city,
-        state: customerInfo?.state,
-        zipCode: customerInfo?.zipCode,
+        customerName: order.customerName,
       },
       shipping_address_collection: {
         allowed_countries: ["PK"],

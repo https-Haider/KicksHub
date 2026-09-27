@@ -10,6 +10,7 @@ import { useCart } from "@/lib/cart-context";
 import { CartButton } from "@/components/cart-button";
 import { getStripe } from "@/lib/stripe-client";
 import { CreditCard, Truck } from "lucide-react";
+import { calculateTotals, FREE_SHIPPING_THRESHOLD_PKR } from "@/lib/commerce";
 
 // Format PKR amount with commas for better readability (no limit on amount)
 function formatPKR(amount: number): string {
@@ -21,6 +22,8 @@ export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "stripe">("cod");
+  const [submitError, setSubmitError] = useState("");
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -41,12 +44,12 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isProcessing || items.length === 0) return;
+    setSubmitError("");
     setIsProcessing(true);
 
     // PKR shipping: free over PKR 5000, otherwise PKR 200. No tax applied.
-    const shippingCost = total > 5000 ? 0 : 200;
-    const taxCost = 0;
-    const finalTotal = Math.round(total + shippingCost + taxCost);
+    const { shipping: shippingCost, tax: taxCost, total: finalTotal } = calculateTotals(items.map(item => ({ price: item.product.price, quantity: item.quantity })));
 
     // Create order on the server first
     let order = null as any;
@@ -57,14 +60,9 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           items: items.map((item) => ({
             productId: item.product.id,
-            productName: item.product.name,
-            price: item.product.price,
             quantity: item.quantity,
             selectedSize: item.selectedSize,
           })),
-          subtotal: total,
-          shipping: shippingCost,
-          total: finalTotal,
           customerName: `${formData.firstName} ${formData.lastName}`,
           email: formData.email,
           phone: formData.phone,
@@ -75,6 +73,7 @@ export default function CheckoutPage() {
           paymentMethod: paymentMethod,
           paymentStatus:
             paymentMethod === "cod" ? "pending" : "awaiting_payment",
+          idempotencyKey,
         }),
       });
 
@@ -85,6 +84,7 @@ export default function CheckoutPage() {
       order = await res.json();
     } catch (err) {
       console.error("Create order error:", err);
+      setSubmitError(err instanceof Error ? err.message : "Unable to place order. Please try again.");
       setIsProcessing(false);
       return;
     }
@@ -96,22 +96,6 @@ export default function CheckoutPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            items: items.map((item) => ({
-              productId: item.product.id,
-              productName: item.product.name,
-              price: item.product.price,
-              quantity: item.quantity,
-              selectedSize: item.selectedSize,
-            })),
-            customerInfo: {
-              email: formData.email,
-              customerName: `${formData.firstName} ${formData.lastName}`,
-              phone: formData.phone,
-              address: formData.address,
-              city: formData.city,
-              state: formData.state,
-              zipCode: formData.zipCode,
-            },
             orderId: order.id,
           }),
         });
@@ -134,6 +118,7 @@ export default function CheckoutPage() {
         }
       } catch (err) {
         console.error("Stripe checkout error:", err);
+        setSubmitError(err instanceof Error ? err.message : "Unable to start card payment.");
         setIsProcessing(false);
         return;
       }
@@ -179,9 +164,7 @@ export default function CheckoutPage() {
   }
 
   // PKR shipping: free over PKR 5000, otherwise PKR 200. No tax applied.
-  const shippingCost = total > 5000 ? 0 : 200;
-  const taxCost = 0;
-  const finalTotal = Math.round(total + shippingCost + taxCost);
+  const { shipping: shippingCost, total: finalTotal } = calculateTotals(items.map(item => ({ price: item.product.price, quantity: item.quantity })));
 
   return (
     <main className="min-h-screen bg-background">
@@ -205,13 +188,13 @@ export default function CheckoutPage() {
                 Shop
               </Link>
               <Link
-                href="#"
+                href="/about"
                 className="text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 About
               </Link>
               <Link
-                href="#"
+                href="/contact"
                 className="text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 Contact
@@ -331,7 +314,7 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
-                      State *
+                      Province *
                     </label>
                     <input
                       type="text"
@@ -344,7 +327,7 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
-                      ZIP Code *
+                      Postal Code *
                     </label>
                     <input
                       type="text"
@@ -437,6 +420,7 @@ export default function CheckoutPage() {
                   ? "Pay with Card"
                   : "Place Order (COD)"}
               </Button>
+              {submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}
             </form>
           </div>
 
@@ -489,7 +473,7 @@ export default function CheckoutPage() {
               </div>
 
               <p className="text-xs text-muted-foreground text-center mt-4">
-                Free shipping on orders over PKR 5000
+                PKR 200 shipping; free over PKR {FREE_SHIPPING_THRESHOLD_PKR.toLocaleString("en-PK")}
               </p>
             </Card>
           </div>

@@ -7,6 +7,7 @@ import { useCart } from "@/lib/cart-context";
 import { Spinner } from "@/components/ui/spinner";
 import { CartButton } from "@/components/cart-button";
 import { getProductSlug } from "@/lib/products";
+import { calculateTotals, FREE_SHIPPING_THRESHOLD_PKR } from "@/lib/commerce";
 
 // Format PKR amount with commas for better readability (no limit on amount)
 function formatPKR(amount: number): string {
@@ -17,8 +18,7 @@ export default function CartPage() {
   const { items, removeItem, updateQuantity, total, clearCart, isLoading } =
     useCart();
   // use PKR shipping rules: free over PKR 5000, otherwise PKR 200
-  const shippingCost = total > 5000 ? 0 : 200;
-  const grandTotal = Math.round(total + shippingCost);
+  const { shipping: shippingCost, total: grandTotal } = calculateTotals(items.map(item => ({ price: item.product.price, quantity: item.quantity })));
 
   return (
     <main className="min-h-screen bg-background">
@@ -37,13 +37,13 @@ export default function CartPage() {
                 Shop
               </Link>
               <Link
-                href="#"
+                href="/about"
                 className="text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 About
               </Link>
               <Link
-                href="#"
+                href="/contact"
                 className="text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 Contact
@@ -141,7 +141,9 @@ export default function CartPage() {
                                     item.selectedSize
                                   )
                                 }
-                                className="px-3 py-1 hover:bg-muted transition-colors"
+                                disabled={item.quantity >= (item.product.stockQuantity ?? 1)}
+                                aria-label="Increase quantity"
+                                className="px-3 py-1 hover:bg-muted transition-colors disabled:opacity-50"
                               >
                                 −
                               </button>
@@ -234,7 +236,7 @@ export default function CartPage() {
                 </Link>
 
                 <p className="text-xs text-muted-foreground text-center mt-4">
-                  Free shipping on orders over PKR 5000
+                  PKR 200 shipping; free over PKR {FREE_SHIPPING_THRESHOLD_PKR.toLocaleString("en-PK")}
                 </p>
               </Card>
             </div>

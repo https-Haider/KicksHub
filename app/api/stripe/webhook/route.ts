@@ -161,7 +161,7 @@ export async function POST(req: Request) {
 
       try {
         // Update order status to confirmed
-        await updateOrderById(orderId, { status: "confirmed" });
+        await updateOrderById(orderId, { status: "confirmed", paymentStatus: "paid" });
 
         // Get the full order details to send email
         const order = await getOrderById(orderId);
@@ -185,7 +185,7 @@ export async function POST(req: Request) {
         console.log(`Checkout session expired for order: ${orderId}`);
         // Update order status to cancelled
         try {
-          await updateOrderById(orderId, { status: "cancelled" });
+          await updateOrderById(orderId, { status: "cancelled", paymentStatus: "failed" });
         } catch (error) {
           console.error(`Error cancelling order ${orderId}:`, error);
         }

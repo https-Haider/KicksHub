@@ -48,14 +48,14 @@ export async function POST(req: Request) {
 
     const candidates = await col
       .find({
-        $or: [{ slug: { $exists: false } }, { slug: "" }, { slug: null }],
+        $or: [{ slug: { $exists: false } }, { slug: "" }],
       })
       .toArray();
 
     let updated = 0;
     for (const p of candidates) {
       const base = slugify(p.name || p.sku || p.id || "");
-      let candidate = base || `product-${p.id ?? Date.now()}`;
+      let candidate = base || `product-${p.id ?? p._id.toString()}`;
       if (existingSlugs.has(candidate)) {
         const withId = `${candidate}-${p.id ?? "x"}`;
         if (!existingSlugs.has(withId)) {

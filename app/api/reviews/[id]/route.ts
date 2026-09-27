@@ -6,7 +6,7 @@ import {
   voteReviewHelpful,
 } from "@/lib/reviews.server";
 
-type Context = { params: { id: string } | Promise<{ id: string }> };
+type Context = { params: Promise<{ id: string }> };
 
 // GET /api/reviews/[id] - Get a single review
 export async function GET(req: Request, ctx: Context) {

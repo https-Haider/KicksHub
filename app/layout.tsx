@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     template: "%s | KicksHub",
   },
   description:
-    "Pakistan's #1 destination for authentic vintage and thrifted sneakers. Shop premium Air Jordans, Nike, Adidas, New Balance & more. Quality verified, affordable prices, nationwide delivery.",
+    "Shop KicksHub's current selection of pre-owned sneakers and footwear available for delivery in Pakistan.",
   keywords: [
     "vintage sneakers Pakistan",
     "thrifted shoes Lahore",
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "KicksHub - Premium Vintage & Thrifted Sneakers Pakistan",
     description:
-      "Pakistan's #1 destination for authentic vintage and thrifted sneakers. Quality verified, affordable prices.",
+      "Browse KicksHub's current selection of pre-owned sneakers and footwear.",
     type: "website",
     locale: "en_US",
     url: "https://www.kickshub.site",
@@ -76,7 +76,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "KicksHub - Premium Vintage & Thrifted Sneakers",
     description:
-      "Pakistan's #1 destination for authentic vintage sneakers. Shop now!",
+      "Browse KicksHub's current pre-owned sneaker inventory.",
     images: ["/og-image.jpg"],
   },
   robots: {

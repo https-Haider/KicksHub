@@ -3,6 +3,7 @@
 import type React from "react";
 import { createContext, useContext, useState, useEffect } from "react";
 import type { Product } from "./products";
+import { clampQuantity } from "./commerce";
 
 export interface CartItem {
   product: Product;
@@ -69,11 +70,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (existingItem) {
         return prevItems.map((item) =>
           item.product.id === product.id && item.selectedSize === selectedSize
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: clampQuantity(item.quantity + quantity, product.stockQuantity) }
             : item
         );
       }
-      return [...prevItems, { product, quantity, selectedSize }];
+      return [...prevItems, { product, quantity: clampQuantity(quantity, product.stockQuantity), selectedSize }];
     });
   };
 
@@ -97,7 +98,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setItems((prevItems) =>
         prevItems.map((item) =>
           item.product.id === productId && item.selectedSize === selectedSize
-            ? { ...item, quantity }
+            ? { ...item, quantity: clampQuantity(quantity, item.product.stockQuantity) }
             : item
         )
       );

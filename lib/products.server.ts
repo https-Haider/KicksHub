@@ -22,6 +22,8 @@ export type Product = {
   seoKeywords?: string;
   updatedAt?: string | Date;
   createdAt?: string | Date;
+  isActive?: boolean;
+  published?: boolean;
 };
 
 interface ProductDocument extends WithId<Document> {
@@ -45,6 +47,8 @@ interface ProductDocument extends WithId<Document> {
   seoKeywords?: string;
   updatedAt?: string | Date;
   createdAt?: string | Date;
+  isActive?: boolean;
+  published?: boolean;
 }
 
 const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://localhost:27017";
@@ -89,12 +93,17 @@ function mapDocumentToProduct(d: ProductDocument): Product {
     seoKeywords: d.seoKeywords,
     updatedAt: d.updatedAt,
     createdAt: d.createdAt,
+    isActive: d.isActive,
+    published: d.published,
   };
 }
 
 export async function getAllProducts(): Promise<Product[]> {
   const col = await getCollection();
-  const docs = await col.find({}).sort({ id: -1 }).toArray();
+  const docs = await col
+    .find({ isActive: { $ne: false }, published: { $ne: false } })
+    .sort({ id: -1 })
+    .toArray();
   return docs.map((d) => mapDocumentToProduct(d));
 }
 
@@ -198,7 +207,7 @@ async function ensureUniqueSlug(
   currentId?: number
 ) {
   const base = localSlugify(String(value));
-  if (!base) return `product-${Date.now()}`;
+  if (!base) return `product-${currentId ?? "new"}`;
   let candidate = base;
   // allow keeping existing slug for current document
   const exists = async (s: string) => {
