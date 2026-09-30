@@ -9,10 +9,10 @@ export function CartButton() {
   const { itemCount } = useCart();
 
   return (
-    <Link href="/cart">
-      <Button variant="outline" size="sm" className="flex items-center gap-2">
+    <Link href="/cart" aria-label={`Cart with ${itemCount} items`}>
+      <Button variant="outline" size="sm" className="flex items-center gap-2 rounded-full border-black/15 bg-transparent shadow-none hover:bg-ink hover:text-cream">
         <ShoppingCart className="h-4 w-4" />
-        <span>Cart ({itemCount})</span>
+        <span className="hidden sm:inline">Cart</span><span className="grid size-5 place-items-center rounded-full bg-rust text-[10px] text-white">{itemCount}</span>
       </Button>
     </Link>
   );

@@ -126,7 +126,7 @@ export default function RootLayout({
         {/* Preload critical LCP image */}
         <link
           rel="preload"
-          href="/shoes/hero-shoes.jpg"
+          href="/editorial/thrifted-sneaker-wall.jpg"
           as="image"
           type="image/jpeg"
           fetchPriority="high"

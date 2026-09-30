@@ -1,325 +1,60 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, Check, RefreshCw, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { getAllProducts } from "@/lib/products.server";
-import { getProductSlug } from "@/lib/products";
-import { ImageIcon } from "lucide-react";
-import { CartButton } from "@/components/cart-button";
+import { ProductCard } from "@/components/product-card";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import { LandingReviewsWrapper } from "@/components/landing-reviews-wrapper";
-import { formatPKR } from "@/lib/commerce";
+
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  // Fetch products server-side for the featured section
   let all: any[] = [];
-  try {
-    all = await getAllProducts();
-  } catch (e) {
-    // ignore — fall back to empty list
-    all = [];
-  }
+  try { all = await getAllProducts(); } catch { all = []; }
+  const featured = all.filter((product) => product.inStock !== false && (product.stockQuantity ?? 1) > 0).slice(0, 4);
 
-  // Show first 4 products as featured (all categories are shoes/sneakers)
-  const featuredProducts = (all || []).filter((product) => product.inStock !== false && (product.stockQuantity ?? 1) > 0).slice(0, 4);
-
-  return (
-    <main className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav
-        className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-        role="navigation"
-        aria-label="Main navigation"
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2">
-                <Image
-                  src="/placeholder-logo.png"
-                  alt="KicksHub"
-                  width={56}
-                  height={56}
-                  priority
-                  className="h-10 md:h-14 w-auto"
-                />
-                <h1 className="text-2xl font-bold text-primary">KicksHub</h1>
-              </div>
-            </div>
-            <div className="hidden md:flex items-center gap-8">
-              <Link
-                href="/products"
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-              >
-                Shop
-              </Link>
-              <Link
-                href="/about"
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-              >
-                About
-              </Link>
-              <Link
-                href="/contact"
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-              >
-                Contact
-              </Link>
-            </div>
-            <div className="flex items-center gap-4">
-              <CartButton />
-            </div>
-          </div>
+  return <main className="min-h-screen overflow-hidden bg-cream text-ink">
+    <SiteHeader />
+    <section className="relative min-h-[680px] border-b border-black/10 lg:min-h-[760px]">
+      <Image src="/editorial/thrifted-sneaker-wall.jpg" alt="A curated collection of gently worn vintage sneakers in the KicksHub studio" fill priority sizes="100vw" className="object-cover object-[67%_center]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#ede6d9] via-[#ede6d9]/90 to-transparent lg:via-[#ede6d9]/55" />
+      <div className="relative mx-auto flex min-h-[680px] max-w-7xl items-center px-4 py-20 sm:px-6 lg:min-h-[760px] lg:px-8">
+        <div className="animate-rise max-w-2xl">
+          <div className="mb-6 flex items-center gap-2 text-xs font-bold uppercase tracking-[.2em] text-rust"><Sparkles className="size-4" /> Freshly curated · Drop 09</div>
+          <h1 className="font-display text-[clamp(3.7rem,8vw,7.8rem)] font-black leading-[.82] tracking-[-.075em]">Worn in.<br/><span className="text-rust">Never worn out.</span></h1>
+          <p className="mt-8 max-w-lg text-lg leading-7 text-ink/70">Distinctive pre-loved sneakers with history, character, and plenty of miles left. Every pair is photographed and graded individually.</p>
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row"><Link href="/products" className="cta-primary">Shop the latest drop <ArrowRight /></Link><Link href="/about" className="cta-secondary">How we pick each pair</Link></div>
+          <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold text-ink/65"><span className="flex items-center gap-2"><Check className="size-4 text-rust"/>Real pair photos</span><span className="flex items-center gap-2"><Check className="size-4 text-rust"/>Condition checked</span><span className="flex items-center gap-2"><Check className="size-4 text-rust"/>Pakistan-wide delivery</span></div>
         </div>
-      </nav>
+      </div>
+      <span className="absolute bottom-5 right-6 hidden rotate-3 rounded-full bg-cream/90 px-4 py-2 text-xs font-bold uppercase tracking-widest shadow-lg md:block">Pre-loved, not pre-forgotten</span>
+    </section>
 
-      {/* Hero Section */}
-      <section
-        className="relative overflow-hidden bg-gradient-to-b from-primary/5 to-background py-20 md:py-32"
-        aria-label="Hero section"
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-12 md:grid-cols-2 md:gap-8 items-center">
-            <div className="space-y-6">
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground text-balance">
-                Discover Vintage & Thrifted Shoes
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-md">
-                Browse our current collection of vintage and thrifted sneakers.
-                From classic Jordans to retro Nikes, find your perfect pair.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/products">
-                  <Button size="lg" className="w-full sm:w-auto">
-                    Shop Now
-                  </Button>
-                </Link>
-                <Button asChild
-                  size="lg"
-                  variant="outline"
-                  className="w-full sm:w-auto bg-transparent"
-                >
-                  <Link href="/about">Learn More</Link>
-                </Button>
-              </div>
-            </div>
-            <div className="relative h-96 md:h-full min-h-[400px] rounded-lg overflow-hidden bg-muted">
-              <Image
-                src="/shoes/hero-shoes.jpg"
-                alt="Collection of vintage thrifted sneakers including Air Jordans and Nike shoes"
-                fill
-                priority
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
+    <section className="border-b border-black/10 bg-rust py-4 text-white" aria-label="Store benefits"><div className="ticker-track flex min-w-max items-center gap-12 text-sm font-bold uppercase tracking-[.16em]">{["One-of-one inventory","New pairs added regularly","Honest condition grading","Style with a smaller footprint","One-of-one inventory","New pairs added regularly","Honest condition grading","Style with a smaller footprint"].map((item, i)=><span key={`${item}-${i}`} className="flex items-center gap-12">{item}<span>✦</span></span>)}</div></section>
 
-      {/* Featured Products Section */}
-      <section
-        className="py-20 md:py-32 bg-background"
-        aria-label="Featured sneakers"
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
-              Featured Sneakers
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Handpicked vintage and thrifted shoes that our customers love.
-              Authentic, quality, and timeless.
-            </p>
-          </div>
+    <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+      <div className="mb-10 flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="eyebrow">Just landed</p><h2 className="section-title">Pairs worth a second look.</h2></div><Link href="/products" className="text-link">See the whole rack <ArrowRight /></Link></div>
+      {featured.length ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{featured.map(product => <ProductCard key={product.id} product={product} />)}</div> : <div className="rounded-[2rem] border border-dashed border-black/20 p-12 text-center"><h3 className="font-display text-3xl font-bold">The next drop is being laced up.</h3><p className="mt-3 text-ink/60">Check back soon or message us to find a specific pair.</p></div>}
+    </section>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {featuredProducts.map((product, index) => {
-              const totalImages =
-                (product.image ? 1 : 0) + (product.images?.length || 0);
-              return (
-                <Link
-                  key={product.id}
-                  href={`/products/${getProductSlug(product)}`}
-                >
-                  <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group cursor-pointer">
-                    <div className="relative h-64 overflow-hidden bg-muted">
-                      <Image
-                        src={product.image || "/placeholder.svg"}
-                        alt={product.name || "Product image"}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        priority={index === 0}
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      {totalImages > 1 && (
-                        <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md bg-black/60 text-white text-xs font-medium">
-                          <ImageIcon className="w-3 h-3" />
-                          <span>{totalImages}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
-                        {product.name}
-                      </h3>
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold text-primary">
-                          {formatPKR(product.price)}
-                        </span>
-                        <Button size="sm" variant="outline">
-                          View
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
+    <section className="bg-olive px-4 py-24 text-cream sm:px-6 lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-[.8fr_1.2fr] lg:items-center"><div><p className="eyebrow text-sand">Why thrift KicksHub?</p><h2 className="section-title max-w-lg text-cream">No stock photos. No mystery pairs.</h2><p className="mt-6 max-w-md leading-7 text-cream/65">The shoes you see are the shoes you get. We show the wear, note the condition, and keep each listing tied to the individual pair.</p><Link href="/about" className="mt-8 inline-flex items-center gap-2 border-b border-rust pb-1 text-sm font-bold">Meet our process <ArrowRight className="size-4"/></Link></div>
+        <div className="grid gap-px overflow-hidden rounded-[2rem] bg-white/15 sm:grid-cols-3">{[
+          [Search,"01","Inspect","We check uppers, soles, lining, shape, and the details that matter."],
+          [RefreshCw,"02","Refresh","Each pair gets a careful clean without hiding its honest character."],
+          [ShieldCheck,"03","Describe","Clear photos and condition notes help you buy with confidence."],
+        ].map(([Icon,n,title,text]: any)=><div key={n} className="bg-[#27372d] p-8 transition-colors hover:bg-[#304438]"><Icon className="size-7 text-rust"/><span className="mt-14 block text-xs text-cream/40">{n}</span><h3 className="mt-3 font-display text-2xl font-bold">{title}</h3><p className="mt-3 text-sm leading-6 text-cream/60">{text}</p></div>)}</div>
+      </div>
+    </section>
 
-          <div className="mt-12 text-center">
-            <Link href="/products">
-              <Button size="lg" variant="outline">
-                View All Products
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+    <section className="mx-auto grid max-w-7xl gap-6 px-4 py-24 sm:px-6 md:grid-cols-2 lg:px-8">
+      <Link href="/products?condition=excellent" className="category-tile group bg-sand"><div><span className="eyebrow">Clean finds</span><h2 className="font-display text-4xl font-black tracking-tight">Excellent condition</h2><p className="mt-3 text-sm text-ink/60">Light wear. Big main-character energy.</p></div><ArrowRight className="size-8 transition-transform group-hover:translate-x-2"/></Link>
+      <Link href="/products?sort=price-low" className="category-tile group bg-[#dad8c7]"><div><span className="eyebrow">Budget gems</span><h2 className="font-display text-4xl font-black tracking-tight">Best price first</h2><p className="mt-3 text-sm text-ink/60">Good shoes don’t need brand-new prices.</p></div><ArrowRight className="size-8 transition-transform group-hover:translate-x-2"/></Link>
+    </section>
 
-      {/* Customer Reviews Section */}
-      <LandingReviewsWrapper />
-
-      {/* Footer */}
-      <footer
-        className="border-t border-border bg-background py-12"
-        role="contentinfo"
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-8 md:grid-cols-4 mb-8">
-            <div>
-              <h3 className="font-semibold text-foreground mb-4">About</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link
-                    href="/about"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/about"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Careers
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/products"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Blog
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground mb-4">Support</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link
-                    href="/contact"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Help Center
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Contact Us
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    FAQ
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground mb-4">Legal</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link
-                    href="/policies/privacy"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Privacy
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/policies/terms"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Terms
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/policies/privacy"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Cookies
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground mb-4">Follow</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link
-                    href="/contact"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Twitter
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Instagram
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Facebook
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-border pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} KicksHub. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
-    </main>
-  );
+    <LandingReviewsWrapper />
+    <section className="px-4 py-24 sm:px-6"><div className="mx-auto max-w-5xl rounded-[2.5rem] bg-rust px-6 py-16 text-center text-white sm:px-12"><p className="eyebrow text-white/65">Need a size or silhouette?</p><h2 className="font-display text-4xl font-black tracking-tight sm:text-6xl">Let us hunt the pair.</h2><p className="mx-auto mt-4 max-w-xl text-white/75">Tell us what you’re after. If it crosses our rack, you’ll be the first to know.</p><Link href="/contact" className="mt-8 inline-flex rounded-full bg-cream px-6 py-3 text-sm font-bold text-ink transition-transform hover:-translate-y-1">Send us your wishlist</Link></div></section>
+    <SiteFooter />
+  </main>;
 }

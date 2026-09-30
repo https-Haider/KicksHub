@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,8 +22,9 @@ import {
   Instagram,
   Facebook,
   MessageCircle,
-  ArrowLeft,
 } from "lucide-react";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,29 +75,13 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Home</span>
-            </Link>
-            <Link href="/" className="text-2xl font-bold">
-              KicksHub
-            </Link>
-            <div className="w-24" />
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="container mx-auto px-4 py-12">
         {/* Page Title */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
+          <p className="eyebrow">Talk to a real person</p>
+          <h1 className="section-title mb-4">Let’s talk sneakers.</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Have a question about our sneakers or your order? We&apos;re here to
             help! Reach out to us through any of the channels below.
@@ -345,7 +329,7 @@ export default function ContactPage() {
         </div>
 
         {/* FAQ Section */}
-        <div className="mt-16 max-w-3xl mx-auto">
+        <div id="faq" className="mt-20 max-w-3xl mx-auto scroll-mt-32">
           <h2 className="text-2xl font-bold text-center mb-8">
             Frequently Asked Questions
           </h2>
@@ -398,14 +382,7 @@ export default function ContactPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t mt-16 py-8">
-        <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>
-            &copy; {new Date().getFullYear()} KicksHub. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
