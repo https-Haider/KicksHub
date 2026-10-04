@@ -4,7 +4,6 @@ import Image from "next/image";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +33,7 @@ export default function AdminProductsPage() {
   const [isGeneratingSeo, setIsGeneratingSeo] = useState(false);
   const [seoKeywords, setSeoKeywords] = useState<string[]>([]);
   const [newKeyword, setNewKeyword] = useState("");
+  const [query, setQuery] = useState("");
   const [formData, setFormData] = useState<Omit<Product, "id">>({
     name: "",
     price: 0,
@@ -76,9 +76,11 @@ export default function AdminProductsPage() {
     };
   }, []);
 
-  if (!isAuthenticated) {
+  if (isLoading || !isAuthenticated) {
     return null;
   }
+
+  const filteredProducts = products.filter((product) => `${product.name} ${product.sku} ${product.category}`.toLowerCase().includes(query.toLowerCase().trim()));
 
   // Generate SEO using AI
   const generateSeo = async () => {
@@ -338,40 +340,28 @@ export default function AdminProductsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* Admin Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href="/admin/dashboard" className="flex items-center gap-2">
-              <div className="text-2xl font-bold text-primary">Admin Panel</div>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Link href="/">
-                <Button variant="outline" size="sm" className="bg-transparent">
-                  View Store
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <main>
       {/* Products Content */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+      <div>
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+            <p className="mb-2 text-xs font-black uppercase tracking-[.22em] text-rust">Catalog</p>
+            <h1 className="text-4xl font-black tracking-[-.045em] sm:text-5xl">
               Products
             </h1>
             <p className="text-muted-foreground">Manage your product catalog</p>
           </div>
-          <Button onClick={handleAddProduct}>Add Product</Button>
+          <Button onClick={handleAddProduct} className="h-11 rounded-full px-5 font-bold">Add Product</Button>
+        </div>
+
+        <div className="mb-5 flex items-center gap-3 rounded-2xl border border-black/8 bg-[#fbf9f4] p-3">
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by product, SKU, or category…" className="h-11 min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-4 text-sm outline-none focus:border-rust focus:ring-4 focus:ring-rust/10" />
+          <span className="hidden whitespace-nowrap px-3 text-xs font-bold text-ink/45 sm:block">{filteredProducts.length} products</span>
         </div>
 
         {/* Products Table */}
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden rounded-[1.5rem] border-black/8 bg-[#fbf9f4] shadow-[0_12px_35px_rgba(31,33,29,.05)]">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -397,7 +387,7 @@ export default function AdminProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr
                     key={product.id}
                     className="hover:bg-muted/50 transition-colors"

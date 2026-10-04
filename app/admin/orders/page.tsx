@@ -16,6 +16,8 @@ export default function AdminOrdersPage() {
     Record<string, { selected?: string; carrier?: string; tracking?: string }>
   >({});
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -39,40 +41,36 @@ export default function AdminOrdersPage() {
     };
   }, [isAuthenticated, isLoading, router]);
 
-  if (!isAuthenticated) {
+  if (isLoading || !isAuthenticated) {
     return null;
   }
 
-  return (
-    <main className="min-h-screen bg-background">
-      {/* Admin Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href="/admin/dashboard" className="flex items-center gap-2">
-              <div className="text-2xl font-bold text-primary">Admin Panel</div>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Link href="/">
-                <Button variant="outline" size="sm" className="bg-transparent">
-                  View Store
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+  const filteredOrders = orders.filter((order) => {
+    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+    const haystack = `${order.id} ${order.customerName} ${order.email}`.toLowerCase();
+    return matchesStatus && haystack.includes(query.toLowerCase().trim());
+  });
 
+  return (
+    <main>
       {/* Orders Content */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+      <div>
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+          <p className="mb-2 text-xs font-black uppercase tracking-[.22em] text-rust">Fulfillment</p>
+          <h1 className="text-4xl font-black tracking-[-.045em] sm:text-5xl">
             Orders
           </h1>
           <p className="text-muted-foreground">
             View and manage all customer orders
           </p>
+        </div>
+
+        <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-black/8 bg-[#fbf9f4] p-3 sm:flex-row">
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search order, customer, or email…" className="h-11 min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-4 text-sm outline-none focus:border-rust focus:ring-4 focus:ring-rust/10" />
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-11 rounded-xl border border-black/10 bg-white px-4 text-sm font-bold outline-none focus:border-rust">
+            <option value="all">All statuses</option><option value="confirmed">Confirmed</option><option value="shipped">Shipped</option><option value="delivered">Delivered</option>
+          </select>
         </div>
 
         {orders.length === 0 ? (
@@ -83,7 +81,7 @@ export default function AdminOrdersPage() {
             </Link>
           </Card>
         ) : (
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-[1.5rem] border-black/8 bg-[#fbf9f4] shadow-[0_12px_35px_rgba(31,33,29,.05)]">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -112,7 +110,7 @@ export default function AdminOrdersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {orders.map((order) => (
+                  {filteredOrders.map((order) => (
                     <tr
                       key={order.id}
                       className="hover:bg-muted/50 transition-colors"
