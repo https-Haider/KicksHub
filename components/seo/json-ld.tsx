@@ -1,3 +1,6 @@
+import { siteConfig } from "@/lib/config";
+import { SITE_URL, absoluteUrl, serializeJsonLd } from "@/lib/seo";
+
 interface OrganizationSchemaProps {
   name?: string;
   url?: string;
@@ -7,8 +10,8 @@ interface OrganizationSchemaProps {
 
 export function OrganizationSchema({
   name = "KicksHub",
-  url = "https://www.kickshub.site",
-  logo = "https://www.kickshub.site/placeholder-logo.png",
+  url = SITE_URL,
+  logo = absoluteUrl("/placeholder-logo.png"),
   description = "Pre-owned sneakers and footwear available for delivery in Pakistan.",
 }: OrganizationSchemaProps) {
   const schema = {
@@ -18,10 +21,7 @@ export function OrganizationSchema({
     url,
     logo,
     description,
-    sameAs: [
-      "https://www.instagram.com/kickshub",
-      "https://www.facebook.com/kickshub",
-    ],
+    sameAs: Object.values(siteConfig.social).filter(Boolean),
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer service",
@@ -32,7 +32,7 @@ export function OrganizationSchema({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -44,7 +44,7 @@ interface WebsiteSchemaProps {
 
 export function WebsiteSchema({
   name = "KicksHub",
-  url = "https://www.kickshub.site",
+  url = SITE_URL,
 }: WebsiteSchemaProps) {
   const schema = {
     "@context": "https://schema.org",
@@ -64,7 +64,7 @@ export function WebsiteSchema({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -138,7 +138,7 @@ export function ProductSchema({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -162,7 +162,7 @@ export function BreadcrumbSchema({ items }: BreadcrumbSchemaProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -180,7 +180,7 @@ interface LocalBusinessSchemaProps {
 
 export function LocalBusinessSchema({
   name = "KicksHub",
-  url = "https://www.kickshub.site",
+  url = SITE_URL,
   image = "https://www.kickshub.site/placeholder-logo.png",
   address = {
     city: "Lahore",
@@ -220,7 +220,7 @@ export function LocalBusinessSchema({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -270,7 +270,7 @@ export function ItemListSchema({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -300,7 +300,7 @@ export function FAQSchema({ questions }: FAQSchemaProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }

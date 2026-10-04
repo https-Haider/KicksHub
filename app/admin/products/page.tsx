@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import Image from "next/image";
+
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -11,7 +13,6 @@ import type { Product } from "@/lib/products";
 import {
   X,
   Plus,
-  GripVertical,
   Sparkles,
   Loader2,
   Bold,
@@ -26,7 +27,7 @@ import { toast } from "sonner";
 
 export default function AdminProductsPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAdmin();
+  const { isAuthenticated, isLoading } = useAdmin();
   const [products, setProducts] = useState<Product[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -52,10 +53,10 @@ export default function AdminProductsPage() {
   });
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       router.push("/admin/login");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isLoading, router]);
 
   useEffect(() => {
     // load products from API
@@ -93,7 +94,6 @@ export default function AdminProductsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-password": "haider1011", // In production, use secure auth
         },
         body: JSON.stringify({
           title: formData.name,
@@ -405,7 +405,7 @@ export default function AdminProductsPage() {
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0">
-                          <img
+                          <Image width={256} height={256} unoptimized
                             src={product.image || "/placeholder.svg"}
                             alt={product.name || "Product preview"}
                             loading="lazy"
@@ -1011,7 +1011,7 @@ export default function AdminProductsPage() {
                     {/* Main Image */}
                     {formData.image && (
                       <div className="relative aspect-square rounded-md overflow-hidden border-2 border-primary bg-muted group">
-                        <img
+                        <Image width={256} height={256} unoptimized
                           src={formData.image}
                           alt="Main product image"
                           className="w-full h-full object-cover"
@@ -1052,7 +1052,7 @@ export default function AdminProductsPage() {
                         key={index}
                         className="relative aspect-square rounded-md overflow-hidden border border-border bg-muted group"
                       >
-                        <img
+                        <Image width={256} height={256} unoptimized
                           src={img}
                           alt={`Product image ${index + 2}`}
                           className="w-full h-full object-cover"

@@ -69,7 +69,7 @@ export default function AdminDashboardPage() {
   function formatPKR(n: number) {
     try {
       return `PKR ${Math.round(n).toLocaleString()}`;
-    } catch (e) {
+    } catch {
       return `PKR ${Math.round(n)}`;
     }
   }

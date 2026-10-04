@@ -26,7 +26,7 @@ async function getRateLimitCollection() {
       { createdAt: 1 },
       { expireAfterSeconds: 3600 } // 1 hour TTL
     );
-  } catch (error) {
+  } catch {
     // Index might already exist with same config - that's fine
     console.log("TTL index already exists or created");
   }

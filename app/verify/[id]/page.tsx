@@ -13,7 +13,7 @@ export default function VerifyOtpPage() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [, setSuccess] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState<number>(0);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export default function VerifyOtpPage() {
         const remainingMs = last + COOLDOWN_MS - Date.now();
         const remainingSec = Math.ceil(remainingMs / 1000);
         if (remainingSec > 0) setResendCooldown(remainingSec);
-      } catch (e) {
+      } catch {
         // ignore errors silently; resend still works by user action
       }
     };
@@ -74,7 +74,7 @@ export default function VerifyOtpPage() {
       setSuccess(true);
       // redirect to thank-you page after confirmation email is sent
       router.push(`/order-success/${orderId}`);
-    } catch (err) {
+    } catch {
       setError("Network error, try again.");
       setLoading(false);
     }
@@ -106,7 +106,7 @@ export default function VerifyOtpPage() {
       const cooldown = payload?.cooldownSeconds ?? 30;
       setResendCooldown(cooldown);
       setResendMessage(`Code resent to ${payload?.sentTo ?? "your email"}`);
-    } catch (err) {
+    } catch {
       setResendMessage("Network error while resending OTP.");
     } finally {
       setIsResending(false);

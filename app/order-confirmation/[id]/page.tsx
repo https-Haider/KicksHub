@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { CartButton } from "@/components/cart-button";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Order } from "@/lib/orders";
@@ -27,7 +25,7 @@ export default function OrderConfirmationPage() {
           const data = await res.json();
           setOrder(data);
         }
-      } catch (err) {
+      } catch {
         setOrder(null);
       } finally {
         setLoading(false);

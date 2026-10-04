@@ -38,7 +38,7 @@ export default function ProductDetailClient({ product }: { product: any }) {
           )
           .slice(0, 4);
         setRelatedProducts(related);
-      } catch (e) {
+      } catch {
         // ignore
       }
     };
@@ -91,7 +91,7 @@ export default function ProductDetailClient({ product }: { product: any }) {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
-              <img
+              <Image width={308} height={312}
                 src="/placeholder-logo.png"
                 alt="KicksHub"
                 className="h-10 md:h-14 w-auto"
@@ -344,7 +344,7 @@ export default function ProductDetailClient({ product }: { product: any }) {
                 >
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group cursor-pointer h-full flex flex-col">
                     <div className="relative h-48 overflow-hidden bg-muted">
-                      <img
+                      <Image width={256} height={256} unoptimized
                         src={relatedProduct.image || "/placeholder.svg"}
                         alt={relatedProduct.name || "Related product"}
                         loading="lazy"

@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -98,7 +100,7 @@ export default function CartPage() {
                     >
                       {/* Product Image */}
                       <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
-                        <img
+                        <Image width={256} height={256} unoptimized
                           src={item.product.image || "/placeholder.svg"}
                           alt={item.product.name}
                           loading="lazy"

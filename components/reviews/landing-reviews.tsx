@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
+
 import { useEffect, useState } from "react";
 import { StarRating } from "./star-rating";
 import { ReviewForm } from "./review-form";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn, getSafeImageUrl } from "@/lib/utils";
@@ -259,7 +260,7 @@ function ReviewCard({ review }: { review: Review }) {
             const safeUrl = getSafeImageUrl(img);
             if (!safeUrl || safeUrl === "/placeholder-image.png") return null;
             return (
-              <img
+              <Image width={64} height={64} unoptimized
                 key={idx}
                 src={safeUrl}
                 alt={`Review image ${idx + 1}`}

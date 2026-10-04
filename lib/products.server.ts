@@ -147,7 +147,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
           break;
         }
       }
-    } catch (e) {
+    } catch {
       // ignore DB iteration errors and fallback to local products below
     }
   }

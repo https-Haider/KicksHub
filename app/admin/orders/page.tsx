@@ -10,7 +10,7 @@ import type { Order } from "@/lib/orders";
 
 export default function AdminOrdersPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAdmin();
+  const { isAuthenticated, isLoading } = useAdmin();
   const [orders, setOrders] = useState<Order[]>([]);
   const [edits, setEdits] = useState<
     Record<string, { selected?: string; carrier?: string; tracking?: string }>
@@ -18,7 +18,7 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       router.push("/admin/login");
       return;
     }
@@ -37,7 +37,7 @@ export default function AdminOrdersPage() {
     return () => {
       mounted = false;
     };
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isLoading, router]);
 
   if (!isAuthenticated) {
     return null;

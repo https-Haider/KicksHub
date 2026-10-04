@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { createValidatedOrder, getOrders } from "@/lib/orders.server";
+import { isAdminAuthenticated } from "@/lib/admin-auth.server";
 
 function createTransporter() {
   return nodemailer.createTransport({
@@ -155,6 +156,9 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const orders = await getOrders();
     return NextResponse.json(orders);

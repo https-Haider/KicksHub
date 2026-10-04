@@ -51,7 +51,10 @@ interface OrderDocument extends Document {
   city?: string;
   state?: string;
   zipCode?: string;
-  status?: string;
+  status?: Order["status"];
+  paymentMethod?: Order["paymentMethod"];
+  paymentStatus?: Order["paymentStatus"];
+  idempotencyKey?: Order["idempotencyKey"];
   createdAt?: string;
   otpHash?: string | null;
   otpExpiresAt?: number | null;
@@ -109,6 +112,7 @@ function toOrder(doc: OrderDocument): Order {
     otpLastSentAt: doc.otpLastSentAt ?? null,
     trackingNumber: doc.trackingNumber ?? null,
     carrier: doc.carrier ?? null,
+    paymentMethod: doc.paymentMethod,
     paymentStatus: doc.paymentStatus,
     idempotencyKey: doc.idempotencyKey,
   };

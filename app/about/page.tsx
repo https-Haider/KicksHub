@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Camera, ScanSearch, Sparkles } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
-export const metadata: Metadata = { title: "Our Process", description: "See how KicksHub selects, checks, refreshes and describes every pre-loved pair.", alternates:{canonical:"/about"} };
+export const metadata = pageMetadata('Our Process', 'See how KicksHub selects, checks, refreshes and describes every pre-loved pair.', '/about');
 
 export default function AboutPage(){return <main className="min-h-screen bg-cream text-ink"><SiteHeader />
   <section className="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8 lg:py-28"><div><p className="eyebrow">The KicksHub way</p><h1 className="section-title">Good shoes deserve another chapter.</h1><p className="mt-7 max-w-xl text-lg leading-8 text-ink/65">We built KicksHub for people who care more about finding the right pair than peeling the plastic off a new box. Our rack is small by design: individual shoes, chosen for their shape, style, and life left in them.</p><p className="mt-5 max-w-xl leading-7 text-ink/65">Pre-loved means honest signs of wear. It should never mean vague photos or surprise condition. That’s why every listing is tied to the real pair and graded before it reaches the shop.</p></div><div className="relative aspect-[4/3] overflow-hidden rounded-[2.5rem]"><Image src="/editorial/thrifted-sneaker-wall.jpg" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover object-right" alt="Vintage sneakers selected for the KicksHub rack"/><span className="absolute bottom-5 left-5 rotate-[-2deg] rounded-full bg-cream px-4 py-2 text-xs font-bold uppercase tracking-widest">Selected pair by pair</span></div></section>

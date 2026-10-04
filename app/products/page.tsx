@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { getAllProducts } from "@/lib/products.server";
 import { ProductCatalogue } from "@/components/product-catalogue";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Suspense } from "react";
 
-export const metadata: Metadata = { title: "Shop Thrifted Sneakers", description: "Browse active KicksHub sneakers by size, condition, category and price.", alternates: { canonical: "/products" } };
+export const metadata = pageMetadata('Shop Thrifted Sneakers', 'Browse pre-owned sneakers in Pakistan by size, condition, category and price. See real pair photos and current availability.', '/products');
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {

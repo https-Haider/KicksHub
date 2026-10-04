@@ -155,4 +155,5 @@ export async function sendOrderDeliveredEmail(order: Order) {
   }
 }
 
-export default { sendOrderShippedEmail, sendOrderDeliveredEmail };
+const orderEmails = { sendOrderShippedEmail, sendOrderDeliveredEmail };
+export default orderEmails;

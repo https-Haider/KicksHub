@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { useState, useRef } from "react";
 import { StarRating } from "./star-rating";
 import { Button } from "@/components/ui/button";
@@ -255,7 +257,7 @@ export function ReviewForm({
               <div className="flex flex-wrap gap-2">
                 {images.map((url, index) => (
                   <div key={index} className="relative group">
-                    <img
+                    <Image width={64} height={64} unoptimized
                       src={url}
                       alt={`Review image ${index + 1}`}
                       className="w-16 h-16 object-cover rounded-md border"

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { getProductById, getProductBySlug } from "@/lib/products.server";
 import ProductDetailClient from "@/components/product-detail-client";
 import { ProductSchema, BreadcrumbSchema } from "@/components/seo/json-ld";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
+
+import { SITE_URL, absoluteUrl, SOCIAL_IMAGE } from "@/lib/seo";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -15,19 +17,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     !Number.isNaN(maybeNum) && String(maybeNum) === String(id)
       ? await getProductById(maybeNum)
       : await getProductBySlug(id as string);
-  if (!product) return { title: "Product not found - KicksHub" };
+  if (!product || product.isActive === false || product.published === false) return { title: "Product not found", robots: { index: false, follow: false } };
 
-  const title = (product as any).seoTitle || `${product.name} — KicksHub`;
-  const description = (product as any).seoDescription
-    ? String((product as any).seoDescription)
+  const title = (product.seoTitle || product.name).replace(/\s*(?:[|—–-])\s*KicksHub\s*$/i, "");
+  const description = product.seoDescription
+    ? String(product.seoDescription)
         .replace(/<[^>]+>/g, "")
         .slice(0, 160)
     : product.description
     ? String(product.description)
         .replace(/<[^>]+>/g, "")
         .slice(0, 160)
-    : "Authentic thrifted sneakers.";
-  const keywordsRaw = (product as any).seoKeywords || "";
+    : "Pre-owned sneakers available for delivery in Pakistan.";
+  const keywordsRaw = product.seoKeywords || "";
   const keywords = keywordsRaw
     ? keywordsRaw
         .split(",")
@@ -35,8 +37,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         .filter(Boolean)
     : undefined;
 
-  const baseUrl = process.env.SITE_URL ?? "https://www.kickshub.site";
-  const productSlug = (product as any).slug || id;
+  const baseUrl = SITE_URL;
+  const productSlug = product.slug || id;
   const canonicalUrl = `${baseUrl}/products/${encodeURIComponent(productSlug)}`;
 
   return {
@@ -47,17 +49,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical: canonicalUrl,
     },
     openGraph: {
-      title,
+      title: `${title} | KicksHub`,
       description,
-      images: product.image ? [product.image] : undefined,
+      images: [absoluteUrl(product.image || SOCIAL_IMAGE)],
       url: canonicalUrl,
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: `${title} | KicksHub`,
       description,
-      images: product.image ? [product.image] : undefined,
+      images: [absoluteUrl(product.image || SOCIAL_IMAGE)],
     },
   };
 }
@@ -72,10 +74,10 @@ export default async function ProductDetailPage({ params }: Props) {
       : await getProductBySlug(id as string);
 
   if (!product || product.isActive === false || product.published === false) notFound();
-  if (product.slug && product.slug !== id) redirect(`/products/${product.slug}`);
+  if (product.slug && product.slug !== id) permanentRedirect(`/products/${encodeURIComponent(product.slug)}`);
 
-  const baseUrl = process.env.SITE_URL || "https://www.kickshub.site";
-  const productUrl = `${baseUrl}/products/${id}`;
+  const baseUrl = SITE_URL;
+  const productUrl = `${baseUrl}/products/${encodeURIComponent(product.slug || id)}`;
 
   // Extract brand from product name (first word usually)
   const brand = product?.name?.split(" ")[0] || "Unknown";
@@ -85,7 +87,7 @@ export default async function ProductDetailPage({ params }: Props) {
     string,
     "NewCondition" | "UsedCondition" | "RefurbishedCondition"
   > = {
-    "like-new": "RefurbishedCondition",
+    "like-new": "UsedCondition",
     excellent: "UsedCondition",
     good: "UsedCondition",
     fair: "UsedCondition",
@@ -98,7 +100,7 @@ export default async function ProductDetailPage({ params }: Props) {
           <ProductSchema
             name={product.name}
             description={product.description || "Premium thrifted sneakers"}
-            image={product.image || "/placeholder.svg"}
+            image={absoluteUrl(product.image || "/placeholder.svg")}
             price={product.price}
             currency="PKR"
             sku={product.sku || String(product.id)}
@@ -106,7 +108,7 @@ export default async function ProductDetailPage({ params }: Props) {
             condition={
               conditionMap[product.condition || "good"] || "UsedCondition"
             }
-            availability={product.inStock ? "InStock" : "OutOfStock"}
+            availability={product.inStock !== false && (product.stockQuantity ?? 0) > 0 ? "InStock" : "OutOfStock"}
             url={productUrl}
             rating={product.rating}
             reviewCount={product.reviews}

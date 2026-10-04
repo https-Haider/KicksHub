@@ -1,3 +1,4 @@
+import { isAdminAuthenticated } from "@/lib/admin-auth.server";
 import { NextResponse } from "next/server";
 import {
   GenerateSeoRequestSchema,
@@ -12,7 +13,6 @@ import {
 export async function POST(req: Request) {
   try {
     // 1. Admin authentication check
-    const authHeader = req.headers.get("x-admin-password");
     const adminPassword = process.env.ADMIN_PASSWORD;
 
     if (!adminPassword) {
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!authHeader || authHeader !== adminPassword) {
+    if (!(await isAdminAuthenticated())) {
       console.log(
         `[AI-SEO] Unauthorized access attempt at ${new Date().toISOString()}`
       );
@@ -35,8 +35,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Use a simple admin identifier for rate limiting
-    const adminUserId = "admin";
+    // Use a simple admin identifier when rate limiting is enabled.
+    // const adminUserId = "admin";
 
     // 2. Rate limit check (disabled during development - uncomment for production)
     // const rateLimitResult = await checkMongoRateLimit({

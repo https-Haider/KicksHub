@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
@@ -9,7 +10,7 @@ import { FREE_SHIPPING_THRESHOLD_PKR, SHIPPING_FEE_PKR, formatPKR } from "@/lib/
 const titles={privacy:"Privacy Policy",terms:"Terms and Conditions",shipping:"Shipping Policy",returns:"Return Policy"} as const;
 type Policy=keyof typeof titles;
 export function generateStaticParams(){return Object.keys(titles).map(policy=>({policy}))}
-export async function generateMetadata({params}:{params:Promise<{policy:string}>}):Promise<Metadata>{const {policy}=await params;const title=titles[policy as Policy];return title?{title,alternates:{canonical:`/policies/${policy}`}}:{}}
+export async function generateMetadata({params}:{params:Promise<{policy:string}>}):Promise<Metadata>{const {policy}=await params;const title=titles[policy as Policy];return title?pageMetadata(title, `${title} for KicksHub orders and pre-owned footwear purchases in Pakistan.`, `/policies/${policy}`):{}}
 
 function PolicyContent({policy}:{policy:Policy}){
   if(policy==="privacy") return <><p>We collect the information needed to operate the store, respond to enquiries, process orders and payments, arrange delivery, prevent abuse and maintain order records. This can include your name, contact details, delivery address, ordered items and payment status.</p><h2>Payments and service providers</h2><p>Card payments are processed by Stripe. KicksHub does not receive your complete card number. Hosting, database, email, analytics and delivery providers may process limited information when needed to provide their services.</p><h2>Your choices</h2><p>You may ask about or request correction of personal information associated with an order by contacting us. Some records may need to be retained for operational, fraud-prevention or legal reasons.</p></>;

@@ -1,4 +1,4 @@
-import { MongoClient, ObjectId, Sort, WithId, Document } from "mongodb";
+import { MongoClient, ObjectId, Sort, WithId } from "mongodb";
 
 export interface Review {
   _id?: string;

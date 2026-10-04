@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import type React from "react";
 import { useState } from "react";
 import Link from "next/link";
@@ -8,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useCart } from "@/lib/cart-context";
 import { CartButton } from "@/components/cart-button";
-import { getStripe } from "@/lib/stripe-client";
 import { CreditCard, Truck } from "lucide-react";
 import { calculateTotals, FREE_SHIPPING_THRESHOLD_PKR } from "@/lib/commerce";
 
@@ -47,9 +48,6 @@ export default function CheckoutPage() {
     if (isProcessing || items.length === 0) return;
     setSubmitError("");
     setIsProcessing(true);
-
-    // PKR shipping: free over PKR 5000, otherwise PKR 200. No tax applied.
-    const { shipping: shippingCost, tax: taxCost, total: finalTotal } = calculateTotals(items.map(item => ({ price: item.product.price, quantity: item.quantity })));
 
     // Create order on the server first
     let order = null as any;
@@ -136,7 +134,7 @@ export default function CheckoutPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between">
               <Link href="/" className="flex items-center gap-2">
-                <img
+                <Image width={308} height={312}
                   src="/placeholder-logo.png"
                   alt="KicksHub"
                   className="h-10 md:h-14 w-auto"
@@ -173,7 +171,7 @@ export default function CheckoutPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
-              <img
+              <Image width={308} height={312}
                 src="/placeholder-logo.png"
                 alt="KicksHub"
                 className="h-10 md:h-14 w-auto"
@@ -398,7 +396,7 @@ export default function CheckoutPage() {
                       </p>
                     </div>
                     <div className="flex gap-1">
-                      <img
+                      <Image width={4} height={3} unoptimized
                         src="https://cdn.jsdelivr.net/gh/lipis/flag-icons/flags/4x3/us.svg"
                         alt="Visa"
                         className="h-5 w-auto opacity-60"

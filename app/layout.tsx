@@ -1,5 +1,7 @@
 import type React from "react";
 import type { Metadata } from "next";
+import Script from "next/script";
+import { SITE_URL, SOCIAL_IMAGE, absoluteUrl } from "@/lib/seo";
 import { Geist, Geist_Mono } from "next/font/google";
 import { CartProvider } from "@/lib/cart-context";
 import { AdminProvider } from "@/lib/admin-context";
@@ -7,7 +9,6 @@ import { ProductsProvider } from "@/lib/products-context";
 import {
   OrganizationSchema,
   WebsiteSchema,
-  LocalBusinessSchema,
 } from "@/components/seo/json-ld";
 import { Toaster } from "@/components/ui/sonner";
 import { AnalyticsWrapper } from "@/components/analytics-wrapper";
@@ -26,7 +27,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL || "https://www.kickshub.site"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "KicksHub - Premium Vintage & Thrifted Sneakers Pakistan",
     template: "%s | KicksHub",
@@ -61,13 +62,11 @@ export const metadata: Metadata = {
       "Browse KicksHub's current selection of pre-owned sneakers and footwear.",
     type: "website",
     locale: "en_US",
-    url: "https://www.kickshub.site",
+    url: SITE_URL,
     siteName: "KicksHub",
     images: [
       {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
+        url: absoluteUrl(SOCIAL_IMAGE),
         alt: "KicksHub - Premium Vintage Sneakers",
       },
     ],
@@ -77,7 +76,7 @@ export const metadata: Metadata = {
     title: "KicksHub - Premium Vintage & Thrifted Sneakers",
     description:
       "Browse KicksHub's current pre-owned sneaker inventory.",
-    images: ["/og-image.jpg"],
+    images: [absoluteUrl(SOCIAL_IMAGE)],
   },
   robots: {
     index: true,
@@ -94,7 +93,7 @@ export const metadata: Metadata = {
     google: process.env.NEXT_PUBLIC_GSC_VERIFICATION,
   },
   alternates: {
-    canonical: "https://www.kickshub.site",
+    canonical: SITE_URL,
   },
   category: "ecommerce",
 };
@@ -123,46 +122,12 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        {/* Preload critical LCP image */}
-        <link
-          rel="preload"
-          href="/editorial/thrifted-sneaker-wall.jpg"
-          as="image"
-          type="image/jpeg"
-          fetchPriority="high"
-        />
-        {/* Default Open Graph / Twitter image to avoid missing image errors */}
-        <meta property="og:image" content="/placeholder-logo.png" />
-        <meta name="twitter:image" content="/placeholder-logo.png" />
-        {/* Google Search Console verification */}
-        {process.env.NEXT_PUBLIC_GSC_VERIFICATION && (
-          <meta
-            name="google-site-verification"
-            content={process.env.NEXT_PUBLIC_GSC_VERIFICATION}
-          />
-        )}
-        {/* Google Analytics (GA4) */}
-        <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-EVQ3WR6K16"
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-EVQ3WR6K16');
-            `,
-          }}
-        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
         <OrganizationSchema />
         <WebsiteSchema />
-        <LocalBusinessSchema />
         <AdminProvider>
           <ProductsProvider>
             <CartProvider>{children}</CartProvider>
@@ -170,6 +135,16 @@ export default function RootLayout({
         </AdminProvider>
         <Toaster position="top-right" richColors />
         <AnalyticsWrapper />
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-EVQ3WR6K16"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-EVQ3WR6K16');`}
+        </Script>
       </body>
     </html>
   );

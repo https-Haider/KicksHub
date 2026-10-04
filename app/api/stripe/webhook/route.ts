@@ -157,9 +157,16 @@ export async function POST(req: Request) {
         break;
       }
 
+      // A completed session may still be awaiting an asynchronous payment.
+      if (session.payment_status !== "paid") break;
+
       console.log(`Payment successful for order: ${orderId}`);
 
       try {
+        const existing = await getOrderById(orderId);
+        if (!existing) throw new Error("ORDER_NOT_FOUND");
+        // Sequential webhook retries must not reset shipped orders or resend mail.
+        if (existing.paymentStatus === "paid") break;
         // Update order status to confirmed
         await updateOrderById(orderId, { status: "confirmed", paymentStatus: "paid" });
 
@@ -173,6 +180,7 @@ export async function POST(req: Request) {
         }
       } catch (error) {
         console.error(`Error processing payment for order ${orderId}:`, error);
+        return NextResponse.json({ error: "Payment processing unavailable" }, { status: 503 });
       }
       break;
     }
@@ -185,9 +193,13 @@ export async function POST(req: Request) {
         console.log(`Checkout session expired for order: ${orderId}`);
         // Update order status to cancelled
         try {
+          const order = await getOrderById(orderId);
+          if (!order) throw new Error("ORDER_NOT_FOUND");
+          if (order.paymentStatus === "paid") break;
           await updateOrderById(orderId, { status: "cancelled", paymentStatus: "failed" });
         } catch (error) {
           console.error(`Error cancelling order ${orderId}:`, error);
+          return NextResponse.json({ error: "Payment processing unavailable" }, { status: 503 });
         }
       }
       break;

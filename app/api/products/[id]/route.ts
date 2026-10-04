@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProductById } from "@/lib/products.server";
 import { updateProduct, deleteProduct } from "@/lib/products.server";
+import { isAdminAuthenticated } from "@/lib/admin-auth.server";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -22,6 +23,9 @@ export async function GET(req: Request, ctx: Context) {
 }
 
 export async function PATCH(req: Request, ctx: Context) {
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const params = await Promise.resolve(ctx.params);
     const id = Number(params.id);
@@ -41,6 +45,9 @@ export async function PATCH(req: Request, ctx: Context) {
 }
 
 export async function DELETE(req: Request, ctx: Context) {
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const params = await Promise.resolve(ctx.params);
     const id = Number(params.id);

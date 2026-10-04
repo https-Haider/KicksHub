@@ -5,6 +5,7 @@ import {
   deleteReview,
   voteReviewHelpful,
 } from "@/lib/reviews.server";
+import { isAdminAuthenticated } from "@/lib/admin-auth.server";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -67,6 +68,10 @@ export async function PATCH(req: Request, ctx: Context) {
       return NextResponse.json(review);
     }
 
+    if (!(await isAdminAuthenticated())) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // Handle review update
     const updates: Partial<{ rating: number; title: string; content: string }> =
       {};
@@ -113,6 +118,9 @@ export async function PATCH(req: Request, ctx: Context) {
 
 // DELETE /api/reviews/[id] - Delete a review
 export async function DELETE(req: Request, ctx: Context) {
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const params = await Promise.resolve(ctx.params);
     const reviewId = params.id;

@@ -112,7 +112,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== "undefined" && window.localStorage) {
         window.localStorage.removeItem("cart");
       }
-    } catch (err) {
+    } catch {
       // ignore
     }
   };

@@ -167,10 +167,9 @@ export async function hashOtp(otp: string): Promise<string> {
   if (!subtle) {
     // Should not happen in most environments, but fallback to simple hashing via node's crypto if available
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const nodeCrypto = require("crypto");
       return nodeCrypto.createHash("sha256").update(otp).digest("hex");
-    } catch (err) {
+    } catch {
       throw new Error("No crypto implementation available to hash OTP");
     }
   }
