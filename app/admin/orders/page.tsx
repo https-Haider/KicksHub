@@ -83,28 +83,28 @@ export default function AdminOrdersPage() {
         ) : (
           <Card className="overflow-hidden rounded-[1.5rem] border-black/8 bg-[#fbf9f4] shadow-[0_12px_35px_rgba(31,33,29,.05)]">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[1120px] table-fixed">
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
-                    <th className="text-left py-4 px-6 font-semibold text-foreground">
+                    <th className="w-[150px] px-5 py-4 text-left font-semibold text-foreground">
                       Order ID
                     </th>
-                    <th className="text-left py-4 px-6 font-semibold text-foreground">
+                    <th className="w-[210px] px-5 py-4 text-left font-semibold text-foreground">
                       Customer
                     </th>
-                    <th className="text-left py-4 px-6 font-semibold text-foreground">
+                    <th className="w-[90px] px-4 py-4 text-left font-semibold text-foreground">
                       Items
                     </th>
-                    <th className="text-left py-4 px-6 font-semibold text-foreground">
+                    <th className="w-[120px] px-4 py-4 text-left font-semibold text-foreground">
                       Total
                     </th>
-                    <th className="text-left py-4 px-6 font-semibold text-foreground">
+                    <th className="w-[310px] px-5 py-4 text-left font-semibold text-foreground">
                       Status
                     </th>
-                    <th className="text-left py-4 px-6 font-semibold text-foreground">
+                    <th className="w-[120px] px-4 py-4 text-left font-semibold text-foreground">
                       Date
                     </th>
-                    <th className="text-left py-4 px-6 font-semibold text-foreground">
+                    <th className="w-[100px] px-4 py-4 text-left font-semibold text-foreground">
                       Actions
                     </th>
                   </tr>
@@ -115,10 +115,10 @@ export default function AdminOrdersPage() {
                       key={order.id}
                       className="hover:bg-muted/50 transition-colors"
                     >
-                      <td className="py-4 px-6 font-mono text-sm text-foreground">
+                      <td className="px-5 py-4 font-mono text-sm text-foreground">
                         {order.id.slice(0, 12)}...
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="px-5 py-4">
                         <div>
                           <p className="font-medium text-foreground">
                             {order.customerName}
@@ -128,17 +128,17 @@ export default function AdminOrdersPage() {
                           </p>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-foreground">
+                      <td className="px-4 py-4 text-foreground">
                         {order.items.length} item(s)
                       </td>
-                      <td className="py-4 px-6 font-semibold text-primary">
+                      <td className="px-4 py-4 font-semibold text-primary">
                         PKR {Math.round(order.total)}
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
+                      <td className="px-5 py-4 align-top">
+                        <div className="space-y-2">
                           {/* colored badge */}
                           <span
-                            className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                            className={`mr-2 inline-flex px-3 py-1 rounded-full text-xs font-medium ${
                               order.status === "confirmed"
                                 ? "bg-sky-100 text-sky-800"
                                 : order.status === "shipped"
@@ -152,7 +152,7 @@ export default function AdminOrdersPage() {
                           </span>
 
                           {/* status selector and inline ship form */}
-                          <div>
+                          <div className="inline-block align-middle">
                             {(() => {
                               const states = [
                                 "confirmed",
@@ -173,7 +173,7 @@ export default function AdminOrdersPage() {
                                   "",
                               };
                               return (
-                                <div className="flex flex-col gap-2">
+                                <div className="flex flex-col items-start gap-2">
                                   <select
                                     value={edit.selected}
                                     onChange={(e) => {
@@ -230,7 +230,7 @@ export default function AdminOrdersPage() {
                                         })();
                                       }
                                     }}
-                                    className="px-2 py-1 rounded-md bg-background border border-border"
+                                    className="h-8 rounded-lg border border-border bg-background px-2 text-xs font-semibold"
                                   >
                                     {states.map((s, idx) => (
                                       <option
@@ -244,7 +244,7 @@ export default function AdminOrdersPage() {
                                   </select>
 
                                   {isEditing && edit.selected === "shipped" && (
-                                    <div className="flex items-center gap-2">
+                                    <div className="grid grid-cols-2 gap-2 rounded-xl bg-black/[.025] p-2">
                                       <input
                                         type="text"
                                         placeholder="Carrier"
@@ -258,7 +258,7 @@ export default function AdminOrdersPage() {
                                             },
                                           }))
                                         }
-                                        className="px-2 py-1 border border-border rounded-md bg-background"
+                                        className="h-8 w-full rounded-lg border border-border bg-white px-2 text-xs"
                                       />
                                       <input
                                         type="text"
@@ -273,7 +273,7 @@ export default function AdminOrdersPage() {
                                             },
                                           }))
                                         }
-                                        className="px-2 py-1 border border-border rounded-md bg-background"
+                                        className="h-8 w-full rounded-lg border border-border bg-white px-2 text-xs"
                                       />
                                       <Button
                                         size="sm"
@@ -349,17 +349,17 @@ export default function AdminOrdersPage() {
                             })()}
                           </div>
                           {order.trackingNumber && (
-                            <div className="text-xs text-muted-foreground mt-1">
+                            <div className="text-xs leading-5 text-muted-foreground">
                               <strong>Carrier:</strong> {order.carrier} •{" "}
                               <strong>Tracking:</strong> {order.trackingNumber}
                             </div>
                           )}
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-muted-foreground">
+                      <td className="whitespace-nowrap px-4 py-4 align-top text-sm text-muted-foreground">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="px-4 py-4 align-top">
                         <Button
                           size="sm"
                           variant="outline"
